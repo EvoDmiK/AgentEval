@@ -1,0 +1,30 @@
+# Evaluation outputs contain excerpts of private notes; Hermes runtime holds credentials
+runs/
+hermes-docker
+__pycache__/
+
+# Isolated evaluation dependencies
+.venv-eval/
+
+# Local deployment configuration and private evaluation evidence
+config.local.json
+HANDOFF.md
+archive/
+datasets/
+materials/
+templates/
+graphify-out/
+.env
+.env.*
+*.pem
+*.key
+.DS_Store
+._*
+
+# Private deployment-specific maintenance helpers
+scripts/eval_memory.py
+scripts/extended_callbacks.py
+scripts/cleanup-openviking.sh
+scripts/quote_check.py
+scripts/publish_eval_dataset.py
+scripts/team_update_handoff.py
