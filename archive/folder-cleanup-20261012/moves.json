@@ -1,0 +1,74 @@
+[
+  {
+    "from": "join_traces.py",
+    "to": "scripts/join_traces.py"
+  },
+  {
+    "from": "make_score_page.py",
+    "to": "scripts/make_score_page.py"
+  },
+  {
+    "from": "publish_summary.py",
+    "to": "scripts/publish_summary.py"
+  },
+  {
+    "from": "quote_check.py",
+    "to": "scripts/quote_check.py"
+  },
+  {
+    "from": "run_eval.py",
+    "to": "scripts/run_eval.py"
+  },
+  {
+    "from": "show_cards.py",
+    "to": "scripts/show_cards.py"
+  },
+  {
+    "from": "show_cards2.py",
+    "to": "scripts/show_cards2.py"
+  },
+  {
+    "from": "team_analysis.py",
+    "to": "scripts/team_analysis.py"
+  },
+  {
+    "from": "team_consensus.py",
+    "to": "scripts/team_consensus.py"
+  },
+  {
+    "from": "team_mlflow.py",
+    "to": "scripts/team_mlflow.py"
+  },
+  {
+    "from": "team_prepare_publication.py",
+    "to": "scripts/team_prepare_publication.py"
+  },
+  {
+    "from": "team_quality_sensitivity.py",
+    "to": "scripts/team_quality_sensitivity.py"
+  },
+  {
+    "from": "team_reblind.py",
+    "to": "scripts/team_reblind.py"
+  },
+  {
+    "from": "team_repetition_breakdown.py",
+    "to": "scripts/team_repetition_breakdown.py"
+  },
+  {
+    "from": "team_restore_labels.py",
+    "to": "scripts/team_restore_labels.py"
+  },
+  {
+    "from": "team_update_handoff.py",
+    "to": "scripts/team_update_handoff.py"
+  },
+  {
+    "from": "cleanup-openviking.sh",
+    "to": "scripts/cleanup-openviking.sh"
+  },
+  {
+    "from": "qa-mode.sh",
+    "to": "scripts/qa-mode.sh"
+  }
+]

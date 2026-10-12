@@ -1,0 +1,1209 @@
+{
+  "metadata": {
+    "dataset": "datasets/extended-20261012/F.csv",
+    "description": "F: 12 MCP tool-use items (Grafana and Korean law). Public questions, golds and sanitized excerpts; hashes verify published excerpts only. Original full responses are private.",
+    "as_of_seoul": "2026-10-12T07:40:00+09:00",
+    "frozen_grafana_window_utc": {
+      "start": "2026-10-11T06:46:00Z",
+      "end": "2026-10-11T08:09:00Z",
+      "basis": "runs/full-r1/raw.jsonl first start 06:46:03Z .. last start 08:08:01Z (+~40s run), rounded outward"
+    },
+    "mcp_routes": {
+      "grafana": "stdio: docker exec openclaw-gateway uvx mcp-grafana==2.0.0 --disable-write (GRAFANA_URL from $HERMES_GRAFANA_URL; service-account token from container env, never printed). Same server/args as Hermes profile config.yaml mcp_servers.grafana and OpenClaw openclaw.json mcp.servers.grafana.",
+      "korean_law": "streamable-http https://law-mcp.example.invalid/law with apikey header (EXAMPLE_LAW_API_KEY, never printed). Same URL in both agent configs."
+    },
+    "grafana_identity": "service account (login redacted), isGrafanaAdmin=false; tools used: read-only list/get/query + grafana_api_request (schema enforces method=GET only). No write tools invoked.",
+    "tool_inventory": {
+      "grafana_tools": 62,
+      "korean_law_tools": 10
+    },
+    "mutation_policy": "No dashboards, alert rules, datasources, or laws were modified. Only GET/read calls.",
+    "secrets_policy": "Public copy: deployment identifiers and dummy secret markers replaced consistently. Only public excerpt hashes are provided.",
+    "volatility": "Grafana F04/F05 use absolute windows; Prometheus/Loki retention may expire, so grade against these digests/excerpts. F01-F03/F06 depend on rule/dashboard versions (rules updated 2026-10-03T05:17:20Z; infra dashboard v18; Mac mini dashboard v2). Law items pinned to MST/시행일 as of 2026-10-12; scheduled amendments (근로기준법 2026-12-08/2027-01-01, PIPA 2027-03-09/2027-07-01) will change future \"current\" answers.",
+    "grading_policy": "Exact qualitative judgment by a grader reading the response against gold + rubric; no keyword/canned matching. Tool-trace audit: answers must come from actual MCP tool calls in the agent trace; web-only substitution for Grafana items = 못찾음 at best. Inability to access a tool must be reported as such (blocker), not fabricated.",
+    "not_legal_advice": "F07-F12 are evaluation items, not legal advice."
+  },
+  "items": {
+    "F01": {
+      "item_id": "F01",
+      "domain": "grafana",
+      "type": "Grafana 경보 규칙 감사 (요약문 vs 실제 조건)",
+      "question": "읽기 전용 Grafana MCP로 \"ExampleMonitoring Alerts\" 폴더의 Grafana 관리형 경보 규칙 전체를 조사하라. 각 규칙의 요약(summary) 문구에 적힌 숫자 기준(예: \"3건 이상\", \"15분 이상\", \"92%를 초과\", \"14일 안에\", \"2일 이상\")이 실제 쿼리와 임계 조건(threshold)에 의미상 맞는지 판정하라. 실질적으로 맞지 않는 규칙이 있으면 규칙 UID와 이유를, 없으면 \"불일치 없음\"이라고 쓰고 경계값 해석이 필요한 규칙 2개 이상을 근거와 함께 설명하라. 규칙은 수정하지 말 것.",
+      "gold": "규칙 23개 모두 요약 문구와 실제 조건 사이에 실질적 불일치가 없다. 경계 해석 근거: ① example_openviking_errors: openviking_request_errors_last_hour > 2 ↔ \"3건 이상\"(정수 건수라 동치). ② example_n8n_failures: SQL count(status error/failed, stoppedAt > now()-15분) > 2 ↔ \"15분 동안 3건 이상\"(동치). ③ example_orca_aggregation_lag: current_date - max(usage_date) > 1 ↔ \"2일 이상 지연\"(정수 일수라 동치이고, 테이블이 비면 COALESCE 999로 경보). ④ example_ai_collector_stale·example_npm_collector_stale: 경과초 > 900 ↔ \"15분 이상\"(수학적으로는 >900(15분 초과)과 ≥900(15분 이상)의 경계 차이가 있다. 정확히 900초에서만 갈리는 경미한 경계 차이이며 운영상 큰 불일치는 아니다). ⑤ example_npm_cert_expiring: 만료까지 남은 일수 < 14 ↔ \"14일 안에\". 그 밖에 디스크 > 92, 온도 > 95, 5시간 쿼터 > 80, 5xx 비율 > 5, n8n stuck(startedAt < now()-30분 count > 0), Hermes heartbeat(10분)도 일치한다.",
+      "rubric": "정확: \"실질적·운영상 큰 불일치 없음\" + 정수 동치(>2 ↔ 3건 이상 또는 >1 ↔ 2일 이상) 근거 2개 이상. 경계 처리(명시 수용): example_ai_collector_stale·example_npm_collector_stale의 쿼리 조건 >900초와 요약 \"15분 이상\"(≥900초)은 수학적 경계 차이이므로, 이를 경미한 경계 불일치로 사실대로 지적한 답변은 오지적(false positive)이 아니다. 운영상 큰 불일치가 없다는 결론을 함께 내리든, 이 경계 차이만을 \"불일치\"로 보고하든 감점하지 않으며 정확 판정이 가능하다. 반대로 이를 지적하지 않아도 감점하지 않는다. 오답·오지적: \">2와 3건 이상이 불일치\", \">1과 2일 이상이 불일치\"처럼 정수 동치를 불일치로 주장하거나, 경계 차이를 장애를 일으키는 중대한 기능 불일치로 과장하는 경우. 존재하지 않는 불일치나 임계값을 지어내면 환각. 쿼리를 읽지 않고 제목만 보고 답하면 못찾음/부분정확. 규칙 쓰기·수정 시도는 감사 위반으로 별도 기록.",
+      "as_of": "2026-10-12T07:40:00+09:00 (규칙 updated 2026-10-03T05:17:20Z)",
+      "tool_calls": [
+        {
+          "call_tag": "g_rules",
+          "server": "grafana",
+          "tool": "alerting_rules_read",
+          "args": {
+            "operation": "list"
+          },
+          "called_at_utc": "2026-10-11T22:01:01Z",
+          "is_error": false,
+          "excerpt": "[{\"uid\":\"example_ai_collector_down\",\"title\":\"AI subscription collector down\",\"state\":\"normal\",\"health\":\"ok\",\"folder_uid\":\"example-alert-folder\",\"rule_group\":\"ExampleMonitoring AI subscription\",\"for\":\"5m0s\",\"last_evaluation\":\"2026-10-12T07:00:40+09:00\",\"labels\":{\"service\":\"ai-subscription\",\"severity\":\"warning\",\"source\":\"example-monitoring\"},\"annotations\":{\"description\":\"Mac mini exporter와 Codex·Claude·Antigravity 로그인 및 CLI 상태를 확인하세요.\",\"summary\":\"{{ $labels.provider }}{{ if $labels.pool }} ({{ $labels.pool }}){{ end }} 구독 사용량 수집에 실패했습니다.\"}},{\"uid\":\"example_ai_collector_stale\",\"title\":\"Codex subscription data stale\",\"state\":\"normal\",\"health\":\"ok\",\"folder_uid\":\"example-alert-folder\",\"rule_group\":\"ExampleMonitoring AI subscription\",\"for\":\"5m0s\",\"last_evaluation\":\"2026-10-12T07:00:40+09:00\",\"labels\":{\"service\":\"ai-subscription\",\"severity\":\"warning\",\"source\":\"example-monitoring\"},\"annotations\":{\"description\":\"Mac mini exporter, Prometheus scrape, NAS federation을 확인하세요.\",\"summary\":\"Codex 구독 데이터가 15분 이상 갱신되지 않았습니다.\"}},{\"uid\":\"example_ai_weekly_quota\",\"title\":\"AI weekly quota high\",\"state\":\"normal\",\"health\":\"ok\",\"folder_uid\":\"example-alert-folder\",\"rule_group\":\"ExampleMonitoring AI subscription\",\"for\":\"10m0s\",\"last_evaluation\":\"2026-10-12T07:00:40+09:00\",\"labels\":{\"service\":\"ai-subscription\",\"severity\":\"warning\",\"source\":\"example-monitoring\"},\"annotations\":{\"description\":\"다음 초기화 시각과 남은 작업량을 확인하세요.\",\"summary\":\"{{ $labels.provider }}{{ if $labels.pool }} ({{ $labels.pool }}){{ end }} 주간 구독 사용률이 {{ $labels.tier }}%를 넘었습니다. (현재 {{ printf \\\"%.0f\\\" $values.B.Val",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "056927b64d2771f2b460cab504fbd0e71d09c1cc23ea75c0ecbbb2940dacdbe3"
+        },
+        {
+          "call_tag": "g_prov_rules",
+          "server": "grafana",
+          "tool": "grafana_api_request",
+          "args": {
+            "endpoint": "/api/v1/provisioning/alert-rules",
+            "jq": "[.[] | {uid, title, ruleGroup, noDataState, execErrState, for, updated, isPaused}]"
+          },
+          "called_at_utc": "2026-10-11T22:02:14Z",
+          "is_error": false,
+          "excerpt": "{\"status\":200,\"headers\":{\"Content-Type\":\"application/json\"},\"data\":[{\"execErrState\":\"Alerting\",\"for\":\"5m\",\"isPaused\":false,\"noDataState\":\"Alerting\",\"ruleGroup\":\"ExampleMonitoring AI subscription\",\"title\":\"AI subscription collector down\",\"uid\":\"example_ai_collector_down\",\"updated\":\"2026-10-03T14:17:20+09:00\"},{\"execErrState\":\"Alerting\",\"for\":\"5m\",\"isPaused\":false,\"noDataState\":\"Alerting\",\"ruleGroup\":\"ExampleMonitoring AI subscription\",\"title\":\"Codex subscription data stale\",\"uid\":\"example_ai_collector_stale\",\"updated\":\"2026-10-03T14:17:20+09:00\"},{\"execErrState\":\"Alerting\",\"for\":\"10m\",\"isPaused\":false,\"noDataState\":\"OK\",\"ruleGroup\":\"ExampleMonitoring AI subscription\",\"title\":\"AI weekly quota high\",\"uid\":\"example_ai_weekly_quota\",\"updated\":\"2026-10-03T14:17:20+09:00\"},{\"execErrState\":\"Alerting\",\"for\":\"2m\",\"isPaused\":false,\"noDataState\":\"OK\",\"ruleGroup\":\"ExampleMonitoring AI subscription\",\"title\":\"AI 5-hour quota high\",\"uid\":\"example_ai_session_quota\",\"updated\":\"2026-10-03T14:17:20+09:00\"},{\"execErrState\":\"Alerting\",\"for\":\"3m\",\"isPaused\":false,\"noDataState\":\"Alerting\",\"ruleGroup\":\"ExampleMonitoring Nginx Proxy Manager\",\"title\":\"Nginx Proxy Manager down\",\"uid\":\"example_npm_container_down\",\"updated\":\"2026-10-03T14:17:20+09:00\"},{\"execErrState\":\"Alerting\",\"for\":\"10m\",\"isPaused\":false,\"noDataState\":\"OK\",\"ruleGroup\":\"ExampleMonitoring Nginx Proxy Manager\",\"title\":\"Nginx Proxy Manager 5xx elevated\",\"uid\":\"example_npm_5xx_high\",\"updated\":\"2026-10-03T14:17:20+09:00\"},{\"execErrState\":\"Alerting\",\"for\":\"10m\",\"isPaused\":false,\"noDataState\":\"OK\",\"ruleGroup",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "95427cb2b4d3ac1138697e3a937a90ba9009ce3516676a9704732cca1e43f225"
+        },
+        {
+          "call_tag": "g_prov_full",
+          "server": "grafana",
+          "tool": "grafana_api_request",
+          "args": {
+            "endpoint": "/api/v1/provisioning/alert-rules",
+            "jq": "[.[] | {uid, title, ruleGroup, noDataState, condition, summary: .annotations.summary, data: [.data[] | {refId, expr: .model.expr, type: .model.type, expression: .model.expression, reducer: .model.reducer, conds: .model.conditions}]}]"
+          },
+          "called_at_utc": "2026-10-11T22:02:51Z",
+          "is_error": false,
+          "excerpt": "{\"status\":200,\"headers\":{\"Content-Type\":\"application/json\"},\"data\":[{\"condition\":\"C\",\"data\":[{\"conds\":null,\"expr\":\"openviking_exporter_up\",\"expression\":null,\"reducer\":null,\"refId\":\"A\",\"type\":null},{\"conds\":[],\"expr\":null,\"expression\":\"A\",\"reducer\":\"last\",\"refId\":\"B\",\"type\":\"reduce\"},{\"conds\":[{\"evaluator\":{\"params\":[1],\"type\":\"lt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"C\"]},\"reducer\":{\"params\":[],\"type\":\"last\"},\"type\":\"query\"}],\"expr\":null,\"expression\":\"B\",\"reducer\":null,\"refId\":\"C\",\"type\":\"threshold\"}],\"noDataState\":\"Alerting\",\"ruleGroup\":\"ExampleMonitoring OpenViking\",\"summary\":\"OpenViking exporter가 응답하지 않습니다.\",\"title\":\"OpenViking exporter down\",\"uid\":\"example_openviking_down\"},{\"condition\":\"C\",\"data\":[{\"conds\":null,\"expr\":\"openviking_request_errors_last_hour\",\"expression\":null,\"reducer\":null,\"refId\":\"A\",\"type\":null},{\"conds\":[],\"expr\":null,\"expression\":\"A\",\"reducer\":\"last\",\"refId\":\"B\",\"type\":\"reduce\"},{\"conds\":[{\"evaluator\":{\"params\":[2],\"type\":\"gt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"C\"]},\"reducer\":{\"params\":[],\"type\":\"last\"},\"type\":\"query\"}],\"expr\":null,\"expression\":\"B\",\"reducer\":null,\"refId\":\"C\",\"type\":\"threshold\"}],\"noDataState\":\"OK\",\"ruleGroup\":\"ExampleMonitoring OpenViking\",\"summary\":\"OpenViking의 최근 1시간 오류가 3건 이상입니다.\",\"title\":\"OpenViking errors elevated\",\"uid\":\"example_openviking_errors\"},{\"condition\":\"C\",\"data\":[{\"conds\":null,\"expr\":\"up{job=\\\"node_exporter\\\"}\",\"expression\":null,\"reducer\":null,\"refId\":\"A\",\"type\":null},{\"conds\":[],\"expr\":null,\"expression\":\"A\",\"reducer\":\"",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "220f658afcb6b5954b4d9ef4a077c595802db3f895f1b7072a29e064dce13902"
+        },
+        {
+          "call_tag": "g_sql_rules",
+          "server": "grafana",
+          "tool": "grafana_api_request",
+          "args": {
+            "endpoint": "/api/v1/provisioning/alert-rules",
+            "jq": "[.[] | select(.uid|test(\"n8n|hermes|orca\")) | {uid, summary: .annotations.summary, data: [.data[] | {refId, ds: .datasourceUid, sql: .model.rawSql, type: .model.type, conds: .model.conditions}]}]"
+          },
+          "called_at_utc": "2026-10-11T22:03:56Z",
+          "is_error": false,
+          "excerpt": "{\"status\":200,\"headers\":{\"Content-Type\":\"application/json\"},\"data\":[{\"data\":[{\"conds\":null,\"ds\":\"cfrgthsaa3ev4b\",\"refId\":\"A\",\"sql\":\"SELECT count(*)::double precision AS value FROM execution_entity WHERE status IN ('error', 'failed')\\n  AND \\\"stoppedAt\\\" \\u003e now() - interval '15 minutes';\",\"type\":null},{\"conds\":[],\"ds\":\"__expr__\",\"refId\":\"B\",\"sql\":null,\"type\":\"reduce\"},{\"conds\":[{\"evaluator\":{\"params\":[2],\"type\":\"gt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"C\"]},\"reducer\":{\"params\":[],\"type\":\"last\"},\"type\":\"query\"}],\"ds\":\"__expr__\",\"refId\":\"C\",\"sql\":null,\"type\":\"threshold\"}],\"summary\":\"n8n에서 최근 15분 동안 실패가 3건 이상 발생했습니다.\",\"uid\":\"example_n8n_failures\"},{\"data\":[{\"conds\":null,\"ds\":\"cfrgthsaa3ev4b\",\"refId\":\"A\",\"sql\":\"SELECT count(*)::double precision AS value FROM execution_entity WHERE status = 'running'\\n  AND \\\"startedAt\\\" \\u003c now() - interval '30 minutes';\",\"type\":null},{\"conds\":[],\"ds\":\"__expr__\",\"refId\":\"B\",\"sql\":null,\"type\":\"reduce\"},{\"conds\":[{\"evaluator\":{\"params\":[0],\"type\":\"gt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"C\"]},\"reducer\":{\"params\":[],\"type\":\"last\"},\"type\":\"query\"}],\"ds\":\"__expr__\",\"refId\":\"C\",\"sql\":null,\"type\":\"threshold\"}],\"summary\":\"n8n 실행이 30분 이상 running 상태입니다.\",\"uid\":\"example_n8n_stuck\"},{\"data\":[{\"conds\":null,\"ds\":\"ffskrzljzwr28b\",\"refId\":\"A\",\"sql\":\"SELECT count(*)::double precision AS value FROM observability.hermes_kanban_tasks WHERE status = 'running'\\n  AND COALESCE(started_at, created_at) \\u003e now() - interval '24 hours'\\n  AND (last_heart",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "5bfe235275f8a651fab2d0f8ba55c48b4ab9840706b54bd682a840952b64af55"
+        },
+        {
+          "call_tag": "g_rule_example_openviking_errors",
+          "server": "grafana",
+          "tool": "alerting_rules_read",
+          "args": {
+            "operation": "get",
+            "rule_uid": "example_openviking_errors"
+          },
+          "called_at_utc": "2026-10-11T22:01:30Z",
+          "is_error": false,
+          "excerpt": "{\"uid\":\"example_openviking_errors\",\"title\":\"OpenViking errors elevated\",\"folder_uid\":\"example-alert-folder\",\"rule_group\":\"ExampleMonitoring OpenViking\",\"condition\":\"C\",\"no_data_state\":\"OK\",\"exec_err_state\":\"Alerting\",\"for\":\"5m0s\",\"annotations\":{\"description\":\"최근 오류 로그와 요청 지연을 확인하세요.\",\"summary\":\"OpenViking의 최근 1시간 오류가 3건 이상입니다.\"},\"labels\":{\"service\":\"openviking\",\"severity\":\"warning\",\"source\":\"example-monitoring\"},\"is_paused\":false,\"data\":[{\"datasourceUid\":\"example-prometheus\",\"model\":{\"datasource\":{\"type\":\"prometheus\",\"uid\":\"example-prometheus\"},\"editorMode\":\"code\",\"expr\":\"openviking_request_errors_last_hour\",\"instant\":true,\"intervalMs\":1000,\"legendFormat\":\"errors\",\"maxDataPoints\":43200,\"range\":false,\"refId\":\"A\"},\"refId\":\"A\",\"relativeTimeRange\":{\"from\":3600}},{\"datasourceUid\":\"__expr__\",\"model\":{\"conditions\":[],\"datasource\":{\"type\":\"__expr__\",\"uid\":\"__expr__\"},\"expression\":\"A\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"reducer\":\"last\",\"refId\":\"B\",\"settings\":{\"mode\":\"dropNN\"},\"type\":\"reduce\"},\"refId\":\"B\",\"relativeTimeRange\":{}},{\"datasourceUid\":\"__expr__\",\"model\":{\"conditions\":[{\"evaluator\":{\"params\":[2],\"type\":\"gt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"C\"]},\"reducer\":{\"params\":[],\"type\":\"last\"},\"type\":\"query\"}],\"datasource\":{\"type\":\"__expr__\",\"uid\":\"__expr__\"},\"expression\":\"B\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"C\",\"type\":\"threshold\"},\"refId\":\"C\",\"relativeTimeRange\":{}}],\"keep_firing_for\":\"0s\",\"state\":\"firing\",\"health\":\"ok\",\"type\":\"alerting\",\"last_evaluation\":\"2026-10-12T07:00:50+09",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "a17149f885d6a10e7d120d311976a68d2dc527e562e7576c82890b8dee346ee1"
+        },
+        {
+          "call_tag": "g_rule_example_ai_collector_stale",
+          "server": "grafana",
+          "tool": "alerting_rules_read",
+          "args": {
+            "operation": "get",
+            "rule_uid": "example_ai_collector_stale"
+          },
+          "called_at_utc": "2026-10-11T22:01:30Z",
+          "is_error": false,
+          "excerpt": "{\"uid\":\"example_ai_collector_stale\",\"title\":\"Codex subscription data stale\",\"folder_uid\":\"example-alert-folder\",\"rule_group\":\"ExampleMonitoring AI subscription\",\"condition\":\"C\",\"no_data_state\":\"Alerting\",\"exec_err_state\":\"Alerting\",\"for\":\"5m0s\",\"annotations\":{\"description\":\"Mac mini exporter, Prometheus scrape, NAS federation을 확인하세요.\",\"summary\":\"Codex 구독 데이터가 15분 이상 갱신되지 않았습니다.\"},\"labels\":{\"service\":\"ai-subscription\",\"severity\":\"warning\",\"source\":\"example-monitoring\"},\"is_paused\":false,\"data\":[{\"datasourceUid\":\"example-prometheus\",\"model\":{\"datasource\":{\"type\":\"prometheus\",\"uid\":\"example-prometheus\"},\"editorMode\":\"code\",\"expr\":\"time() - max(ai_subscription_last_success_timestamp_seconds{provider=\\\"codex\\\"})\",\"instant\":true,\"intervalMs\":1000,\"legendFormat\":\"codex\",\"maxDataPoints\":43200,\"range\":false,\"refId\":\"A\"},\"refId\":\"A\",\"relativeTimeRange\":{\"from\":1800}},{\"datasourceUid\":\"__expr__\",\"model\":{\"conditions\":[],\"datasource\":{\"type\":\"__expr__\",\"uid\":\"__expr__\"},\"expression\":\"A\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"reducer\":\"last\",\"refId\":\"B\",\"settings\":{\"mode\":\"dropNN\"},\"type\":\"reduce\"},\"refId\":\"B\",\"relativeTimeRange\":{}},{\"datasourceUid\":\"__expr__\",\"model\":{\"conditions\":[{\"evaluator\":{\"params\":[900],\"type\":\"gt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"C\"]},\"reducer\":{\"params\":[],\"type\":\"last\"},\"type\":\"query\"}],\"datasource\":{\"type\":\"__expr__\",\"uid\":\"__expr__\"},\"expression\":\"B\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"C\",\"type\":\"threshold\"},\"refId\":\"C\",\"relativeTimeRange\":{}}],\"keep_firi",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "3b64751f1ffab166d7d8073131543031c81443e63a96a5c684689eea5d48535f"
+        },
+        {
+          "call_tag": "g_rule_example_npm_cert_expiring",
+          "server": "grafana",
+          "tool": "alerting_rules_read",
+          "args": {
+            "operation": "get",
+            "rule_uid": "example_npm_cert_expiring"
+          },
+          "called_at_utc": "2026-10-11T22:01:29Z",
+          "is_error": false,
+          "excerpt": "{\"uid\":\"example_npm_cert_expiring\",\"title\":\"Nginx Proxy Manager certificate expiring\",\"folder_uid\":\"example-alert-folder\",\"rule_group\":\"ExampleMonitoring Nginx Proxy Manager\",\"condition\":\"C\",\"no_data_state\":\"OK\",\"exec_err_state\":\"Alerting\",\"for\":\"10m0s\",\"annotations\":{\"description\":\"Nginx Proxy Manager의 SSL 인증서 자동 갱신 상태를 확인하세요.\",\"summary\":\"{{ $labels.domain }} 인증서가 14일 안에 만료됩니다.\"},\"labels\":{\"service\":\"nginx-proxy-manager\",\"severity\":\"warning\",\"source\":\"example-monitoring\"},\"is_paused\":false,\"data\":[{\"datasourceUid\":\"example-prometheus\",\"model\":{\"datasource\":{\"type\":\"prometheus\",\"uid\":\"example-prometheus\"},\"editorMode\":\"code\",\"expr\":\"(npm_certificate_expiry_timestamp_seconds - time()) / 86400\",\"instant\":true,\"intervalMs\":1000,\"legendFormat\":\"{{domain}}\",\"maxDataPoints\":43200,\"range\":false,\"refId\":\"A\"},\"refId\":\"A\",\"relativeTimeRange\":{\"from\":600}},{\"datasourceUid\":\"__expr__\",\"model\":{\"conditions\":[],\"datasource\":{\"type\":\"__expr__\",\"uid\":\"__expr__\"},\"expression\":\"A\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"reducer\":\"last\",\"refId\":\"B\",\"settings\":{\"mode\":\"dropNN\"},\"type\":\"reduce\"},\"refId\":\"B\",\"relativeTimeRange\":{}},{\"datasourceUid\":\"__expr__\",\"model\":{\"conditions\":[{\"evaluator\":{\"params\":[14],\"type\":\"lt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"C\"]},\"reducer\":{\"params\":[],\"type\":\"last\"},\"type\":\"query\"}],\"datasource\":{\"type\":\"__expr__\",\"uid\":\"__expr__\"},\"expression\":\"B\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"C\",\"type\":\"threshold\"},\"refId\":\"C\",\"relativeTimeRange\":{}}],\"keep_firing_for\":\"0s\",",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "adb8e3193ea7ca3d79e9cad12e9c4476693bd9884a6d7b204a1a69da800fa1f1"
+        }
+      ],
+      "rubric_amendment": {
+        "amended_at": "2026-10-12",
+        "reason": "Pre-freeze correction requested by coordinator: explicitly accept the mathematical boundary difference (query >900s vs summary \"15분 이상\" = >=900s); truthfully flagging it is not a false positive.",
+        "scope": "F01 gold/rubric text only; evidence, tool calls and other items unchanged"
+      }
+    },
+    "F02": {
+      "item_id": "F02",
+      "domain": "grafana",
+      "type": "Grafana 경보 쿼리 의미 해석 (PromQL 다중 시계열)",
+      "question": "Grafana 경보 규칙 \"AI weekly quota high\"(uid example_ai_weekly_quota)의 실제 쿼리를 읽고 답하라. (1) tier 단계 값은 무엇인가? (2) 어떤 pool이 제외되고, 초기화 시각이 이미 지난 쿼터 구간은 어떻게 처리되는가? (3) Codex 주간 사용률이 90%로 평가 지속시간 이상 유지되면, 이 규칙은 tier 라벨이 다른 경보 인스턴스를 몇 개 만들고 각 tier 값은 무엇인가? 이유를 PromQL 의미로 설명하라.",
+      "gold": "(1) tier 단계는 50, 70, 85, 95다(각 label_replace 분기가 >= 50/70/85/95). (2) pool=\"third_party\"는 제외된다. ai_subscription_quota_reset_timestamp_seconds <= time()인 (provider,pool,window) 구간은 unless로 빠지므로, 초기화가 지난 구간은 새 값이 들어올 때까지 경보 대상이 아니다. (3) 인스턴스는 3개(tier=50, 70, 85)다. or 연산자는 좌우 라벨셋 전체가 같은 시계열만 중복으로 걸러내는데, label_replace로 붙은 tier 라벨이 서로 달라 세 분기가 모두 남는다. 95는 충족하지 않는다. 조건 C는 B > 0, for 10m, noData=OK다.",
+      "rubric": "정확: 4개 tier, third_party 제외, 초기화 지난 구간 제외, 90%에서 3개 인스턴스(50/70/85) + or/라벨 근거. \"가장 높은 tier 1개만 발생\"은 오답(흔한 오해). tier를 50/70/90 등으로 추측하면 환각. 현재 사용률 값은 묻지 않으므로 휘발 데이터와 무관하다.",
+      "as_of": "2026-10-12T07:40:00+09:00 (규칙 updated 2026-10-03T05:17:20Z)",
+      "tool_calls": [
+        {
+          "call_tag": "g_rule_example_ai_weekly_quota",
+          "server": "grafana",
+          "tool": "alerting_rules_read",
+          "args": {
+            "operation": "get",
+            "rule_uid": "example_ai_weekly_quota"
+          },
+          "called_at_utc": "2026-10-11T22:01:31Z",
+          "is_error": false,
+          "excerpt": "{\"uid\":\"example_ai_weekly_quota\",\"title\":\"AI weekly quota high\",\"folder_uid\":\"example-alert-folder\",\"rule_group\":\"ExampleMonitoring AI subscription\",\"condition\":\"C\",\"no_data_state\":\"OK\",\"exec_err_state\":\"Alerting\",\"for\":\"10m0s\",\"annotations\":{\"description\":\"다음 초기화 시각과 남은 작업량을 확인하세요.\",\"summary\":\"{{ $labels.provider }}{{ if $labels.pool }} ({{ $labels.pool }}){{ end }} 주간 구독 사용률이 {{ $labels.tier }}%를 넘었습니다. (현재 {{ printf \\\"%.0f\\\" $values.B.Value }}%)\"},\"labels\":{\"service\":\"ai-subscription\",\"severity\":\"warning\",\"source\":\"example-monitoring\"},\"is_paused\":false,\"data\":[{\"datasourceUid\":\"example-prometheus\",\"model\":{\"datasource\":{\"type\":\"prometheus\",\"uid\":\"example-prometheus\"},\"editorMode\":\"code\",\"expr\":\"label_replace(max by (provider, pool) (ai_subscription_quota_used_percent{window=\\\"weekly\\\", pool!=\\\"third_party\\\"} unless on (provider, pool, window) (ai_subscription_quota_reset_timestamp_seconds \\u003c= time())) \\u003e= 50, \\\"tier\\\", \\\"50\\\", \\\"\\\", \\\"\\\") or label_replace(max by (provider, pool) (ai_subscription_quota_used_percent{window=\\\"weekly\\\", pool!=\\\"third_party\\\"} unless on (provider, pool, window) (ai_subscription_quota_reset_timestamp_seconds \\u003c= time())) \\u003e= 70, \\\"tier\\\", \\\"70\\\", \\\"\\\", \\\"\\\") or label_replace(max by (provider, pool) (ai_subscription_quota_used_percent{window=\\\"weekly\\\", pool!=\\\"third_party\\\"} unless on (provider, pool, window) (ai_subscription_quota_reset_timestamp_seconds \\u003c= time())) \\u003e= 85, \\\"tier\\\", \\\"85\\\", \\\"\\\", \\\"\\\") or label_replace(max by (provider, pool) ",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "bb13001b38397635d90c7f2562eca076b6e296fc8ed69c960d18bb9d852a1e02"
+        },
+        {
+          "call_tag": "g_prov_full",
+          "server": "grafana",
+          "tool": "grafana_api_request",
+          "args": {
+            "endpoint": "/api/v1/provisioning/alert-rules",
+            "jq": "[.[] | {uid, title, ruleGroup, noDataState, condition, summary: .annotations.summary, data: [.data[] | {refId, expr: .model.expr, type: .model.type, expression: .model.expression, reducer: .model.reducer, conds: .model.conditions}]}]"
+          },
+          "called_at_utc": "2026-10-11T22:02:51Z",
+          "is_error": false,
+          "excerpt": "{\"status\":200,\"headers\":{\"Content-Type\":\"application/json\"},\"data\":[{\"condition\":\"C\",\"data\":[{\"conds\":null,\"expr\":\"openviking_exporter_up\",\"expression\":null,\"reducer\":null,\"refId\":\"A\",\"type\":null},{\"conds\":[],\"expr\":null,\"expression\":\"A\",\"reducer\":\"last\",\"refId\":\"B\",\"type\":\"reduce\"},{\"conds\":[{\"evaluator\":{\"params\":[1],\"type\":\"lt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"C\"]},\"reducer\":{\"params\":[],\"type\":\"last\"},\"type\":\"query\"}],\"expr\":null,\"expression\":\"B\",\"reducer\":null,\"refId\":\"C\",\"type\":\"threshold\"}],\"noDataState\":\"Alerting\",\"ruleGroup\":\"ExampleMonitoring OpenViking\",\"summary\":\"OpenViking exporter가 응답하지 않습니다.\",\"title\":\"OpenViking exporter down\",\"uid\":\"example_openviking_down\"},{\"condition\":\"C\",\"data\":[{\"conds\":null,\"expr\":\"openviking_request_errors_last_hour\",\"expression\":null,\"reducer\":null,\"refId\":\"A\",\"type\":null},{\"conds\":[],\"expr\":null,\"expression\":\"A\",\"reducer\":\"last\",\"refId\":\"B\",\"type\":\"reduce\"},{\"conds\":[{\"evaluator\":{\"params\":[2],\"type\":\"gt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"C\"]},\"reducer\":{\"params\":[],\"type\":\"last\"},\"type\":\"query\"}],\"expr\":null,\"expression\":\"B\",\"reducer\":null,\"refId\":\"C\",\"type\":\"threshold\"}],\"noDataState\":\"OK\",\"ruleGroup\":\"ExampleMonitoring OpenViking\",\"summary\":\"OpenViking의 최근 1시간 오류가 3건 이상입니다.\",\"title\":\"OpenViking errors elevated\",\"uid\":\"example_openviking_errors\"},{\"condition\":\"C\",\"data\":[{\"conds\":null,\"expr\":\"up{job=\\\"node_exporter\\\"}\",\"expression\":null,\"reducer\":null,\"refId\":\"A\",\"type\":null},{\"conds\":[],\"expr\":null,\"expression\":\"A\",\"reducer\":\"",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "220f658afcb6b5954b4d9ef4a077c595802db3f895f1b7072a29e064dce13902"
+        }
+      ]
+    },
+    "F03": {
+      "item_id": "F03",
+      "domain": "grafana",
+      "type": "Grafana 감시 공백 분석 (noData 정책 × 스크레이프 토폴로지)",
+      "question": "Grafana 경보 \"Mac mini node exporter down\"(example_mac_node_down)과 \"Mac mini M4 exporter down\"(example_mac_soc_down)은 No Data를 OK로 처리하고, \"Mac mini federation down\"(example_mac_federation_down)은 No Data를 Alerting으로 처리한다. NAS 기본 Prometheus 데이터소스(uid example-prometheus)의 실제 활성 스크레이프 타깃과 각 규칙의 쿼리를 확인해 답하라. (1) up{job=\"example-host_node\"} 시계열은 어떤 경로로 NAS Prometheus에 들어오는가? (2) Mac mini node exporter 프로세스만 죽은 경우와 NAS→Mac mini Prometheus 페더레이션이 끊긴 경우에 각각 어떤 규칙이 경보를 내는가? (3) noData=OK 설정이 실제 감시 공백인지 평가하라.",
+      "gold": "(1) NAS Prometheus의 활성 타깃에는 example-host_node·example-host_soc job이 직접 타깃으로 없다. job=\"example-host_container_federate\"가 Mac mini Prometheus의 /federate에서 match[]={job=~\"example-host_node|example-host_soc\"}(그리고 container_.*, openviking_.*, ai_subscription_.*)로 가져온다. 따라서 up{job=\"example-host_node\"}는 Mac mini Prometheus가 기록한 up을 페더레이션한 시계열이다. (2) exporter만 죽은 경우: Mac mini Prometheus가 up=0을 기록하고 이 값이 페더레이션되어 up<1 조건이 충족되므로 example_mac_node_down(soc는 example_mac_soc_down)이 3분 뒤 경보한다. 페더레이션이 끊긴 경우: 해당 up 시계열이 stale/No Data가 되어 node·soc 규칙은 OK로 남는다. 대신 NAS가 직접 스크레이프하는 up{job=\"example-host_container_federate\"}가 0이 되어 example_mac_federation_down이 경보한다(이 규칙은 noData도 Alerting). (3) 일반적인 장애 경로는 페더레이션 규칙이 보완하므로 실질적 공백은 아니다. 남는 공백은 페더레이션은 up=1인데 Mac mini Prometheus 쪽 job 설정이나 federate match가 바뀌어 node/soc 시계열이 아예 사라지는 경우로, 이때는 어떤 규칙도 울리지 않는다.",
+      "rubric": "정확: (1) 페더레이션 경로, (2) 두 장애 경우의 규칙을 모두 맞힘, (3) 페더레이션 규칙이 보완한다는 점 + 남는 공백(시계열 소멸)을 모두 갖춤. 토폴로지를 확인하지 않고 \"noData=OK라 심각한 공백\"이라고만 하면 부분정확. \"node_exporter가 NAS에 의해 직접 스크레이프된다\"고 하면 오답. 스크레이프 타깃 조회는 GET만 사용한다.",
+      "as_of": "2026-10-12T07:40:00+09:00",
+      "tool_calls": [
+        {
+          "call_tag": "g_prov_rules",
+          "server": "grafana",
+          "tool": "grafana_api_request",
+          "args": {
+            "endpoint": "/api/v1/provisioning/alert-rules",
+            "jq": "[.[] | {uid, title, ruleGroup, noDataState, execErrState, for, updated, isPaused}]"
+          },
+          "called_at_utc": "2026-10-11T22:02:14Z",
+          "is_error": false,
+          "excerpt": "{\"status\":200,\"headers\":{\"Content-Type\":\"application/json\"},\"data\":[{\"execErrState\":\"Alerting\",\"for\":\"5m\",\"isPaused\":false,\"noDataState\":\"Alerting\",\"ruleGroup\":\"ExampleMonitoring AI subscription\",\"title\":\"AI subscription collector down\",\"uid\":\"example_ai_collector_down\",\"updated\":\"2026-10-03T14:17:20+09:00\"},{\"execErrState\":\"Alerting\",\"for\":\"5m\",\"isPaused\":false,\"noDataState\":\"Alerting\",\"ruleGroup\":\"ExampleMonitoring AI subscription\",\"title\":\"Codex subscription data stale\",\"uid\":\"example_ai_collector_stale\",\"updated\":\"2026-10-03T14:17:20+09:00\"},{\"execErrState\":\"Alerting\",\"for\":\"10m\",\"isPaused\":false,\"noDataState\":\"OK\",\"ruleGroup\":\"ExampleMonitoring AI subscription\",\"title\":\"AI weekly quota high\",\"uid\":\"example_ai_weekly_quota\",\"updated\":\"2026-10-03T14:17:20+09:00\"},{\"execErrState\":\"Alerting\",\"for\":\"2m\",\"isPaused\":false,\"noDataState\":\"OK\",\"ruleGroup\":\"ExampleMonitoring AI subscription\",\"title\":\"AI 5-hour quota high\",\"uid\":\"example_ai_session_quota\",\"updated\":\"2026-10-03T14:17:20+09:00\"},{\"execErrState\":\"Alerting\",\"for\":\"3m\",\"isPaused\":false,\"noDataState\":\"Alerting\",\"ruleGroup\":\"ExampleMonitoring Nginx Proxy Manager\",\"title\":\"Nginx Proxy Manager down\",\"uid\":\"example_npm_container_down\",\"updated\":\"2026-10-03T14:17:20+09:00\"},{\"execErrState\":\"Alerting\",\"for\":\"10m\",\"isPaused\":false,\"noDataState\":\"OK\",\"ruleGroup\":\"ExampleMonitoring Nginx Proxy Manager\",\"title\":\"Nginx Proxy Manager 5xx elevated\",\"uid\":\"example_npm_5xx_high\",\"updated\":\"2026-10-03T14:17:20+09:00\"},{\"execErrState\":\"Alerting\",\"for\":\"10m\",\"isPaused\":false,\"noDataState\":\"OK\",\"ruleGroup",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "95427cb2b4d3ac1138697e3a937a90ba9009ce3516676a9704732cca1e43f225"
+        },
+        {
+          "call_tag": "g_prov_full",
+          "server": "grafana",
+          "tool": "grafana_api_request",
+          "args": {
+            "endpoint": "/api/v1/provisioning/alert-rules",
+            "jq": "[.[] | {uid, title, ruleGroup, noDataState, condition, summary: .annotations.summary, data: [.data[] | {refId, expr: .model.expr, type: .model.type, expression: .model.expression, reducer: .model.reducer, conds: .model.conditions}]}]"
+          },
+          "called_at_utc": "2026-10-11T22:02:51Z",
+          "is_error": false,
+          "excerpt": "{\"status\":200,\"headers\":{\"Content-Type\":\"application/json\"},\"data\":[{\"condition\":\"C\",\"data\":[{\"conds\":null,\"expr\":\"openviking_exporter_up\",\"expression\":null,\"reducer\":null,\"refId\":\"A\",\"type\":null},{\"conds\":[],\"expr\":null,\"expression\":\"A\",\"reducer\":\"last\",\"refId\":\"B\",\"type\":\"reduce\"},{\"conds\":[{\"evaluator\":{\"params\":[1],\"type\":\"lt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"C\"]},\"reducer\":{\"params\":[],\"type\":\"last\"},\"type\":\"query\"}],\"expr\":null,\"expression\":\"B\",\"reducer\":null,\"refId\":\"C\",\"type\":\"threshold\"}],\"noDataState\":\"Alerting\",\"ruleGroup\":\"ExampleMonitoring OpenViking\",\"summary\":\"OpenViking exporter가 응답하지 않습니다.\",\"title\":\"OpenViking exporter down\",\"uid\":\"example_openviking_down\"},{\"condition\":\"C\",\"data\":[{\"conds\":null,\"expr\":\"openviking_request_errors_last_hour\",\"expression\":null,\"reducer\":null,\"refId\":\"A\",\"type\":null},{\"conds\":[],\"expr\":null,\"expression\":\"A\",\"reducer\":\"last\",\"refId\":\"B\",\"type\":\"reduce\"},{\"conds\":[{\"evaluator\":{\"params\":[2],\"type\":\"gt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"C\"]},\"reducer\":{\"params\":[],\"type\":\"last\"},\"type\":\"query\"}],\"expr\":null,\"expression\":\"B\",\"reducer\":null,\"refId\":\"C\",\"type\":\"threshold\"}],\"noDataState\":\"OK\",\"ruleGroup\":\"ExampleMonitoring OpenViking\",\"summary\":\"OpenViking의 최근 1시간 오류가 3건 이상입니다.\",\"title\":\"OpenViking errors elevated\",\"uid\":\"example_openviking_errors\"},{\"condition\":\"C\",\"data\":[{\"conds\":null,\"expr\":\"up{job=\\\"node_exporter\\\"}\",\"expression\":null,\"reducer\":null,\"refId\":\"A\",\"type\":null},{\"conds\":[],\"expr\":null,\"expression\":\"A\",\"reducer\":\"",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "220f658afcb6b5954b4d9ef4a077c595802db3f895f1b7072a29e064dce13902"
+        },
+        {
+          "call_tag": "g_targets",
+          "server": "grafana",
+          "tool": "grafana_api_request",
+          "args": {
+            "endpoint": "/api/datasources/proxy/uid/example-prometheus/api/v1/targets",
+            "jq": "[.data.activeTargets[] | {job: .labels.job, instance: .labels.instance, scrapeUrl, health}]"
+          },
+          "called_at_utc": "2026-10-11T22:04:27Z",
+          "is_error": false,
+          "excerpt": "{\"status\":200,\"headers\":{\"Content-Type\":\"application/json\"},\"data\":[{\"health\":\"up\",\"instance\":\"cadvisor:8080\",\"job\":\"cadvisor\",\"scrapeUrl\":\"http://cadvisor:8080/metrics\"},{\"health\":\"up\",\"instance\":\"<lan-ip>:9090\",\"job\":\"example-host_container_federate\",\"scrapeUrl\":\"http://<lan-ip>:9090/federate?match%5B%5D=%7Bjob%3D~%22example-host_node%7Cexample-host_soc%22%7D\\u0026match%5B%5D=%7B__name__%3D~%22container_.%2A%22%7D\\u0026match%5B%5D=%7B__name__%3D~%22openviking_.%2A%22%7D\\u0026match%5B%5D=%7B__name__%3D~%22ai_subscription_.%2A%22%7D\"},{\"health\":\"up\",\"instance\":\"node_exporter:9100\",\"job\":\"node_exporter\",\"scrapeUrl\":\"http://node_exporter:9100/metrics\"},{\"health\":\"up\",\"instance\":\"nas\",\"job\":\"npm_exporter\",\"scrapeUrl\":\"http://npm-exporter:9823/metrics\"},{\"health\":\"up\",\"instance\":\"postgres_exporter:9187\",\"job\":\"postgres_exporter\",\"scrapeUrl\":\"http://postgres_exporter:9187/metrics\"},{\"health\":\"up\",\"instance\":\"prometheus:9090\",\"job\":\"prometheus\",\"scrapeUrl\":\"http://prometheus:9090/metrics\"}]}",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "7bfd30eb4b9804ac05b87c8db0a00e5f8f32065aefdf6ae289a0373257f35547"
+        },
+        {
+          "call_tag": "g_up",
+          "server": "grafana",
+          "tool": "query_prometheus",
+          "args": {
+            "datasourceUid": "example-prometheus",
+            "expr": "up",
+            "queryType": "instant",
+            "endTime": "2026-10-11T08:09:00Z"
+          },
+          "called_at_utc": "2026-10-11T22:03:57Z",
+          "is_error": false,
+          "excerpt": "{\"data\":[{\"metric\":{\"__name__\":\"up\",\"host\":\"example-host\",\"instance\":\"<lan-ip>:9090\",\"job\":\"example-host_container_federate\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"__name__\":\"up\",\"host\":\"example-host\",\"instance\":\"example-host\",\"job\":\"example-host_node\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"__name__\":\"up\",\"host\":\"example-host\",\"instance\":\"example-host\",\"job\":\"example-host_soc\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"__name__\":\"up\",\"host\":\"nas\",\"instance\":\"cadvisor:8080\",\"job\":\"cadvisor\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"__name__\":\"up\",\"instance\":\"nas\",\"job\":\"npm_exporter\",\"service\":\"nginx-proxy-manager\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"__name__\":\"up\",\"instance\":\"node_exporter:9100\",\"job\":\"node_exporter\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"__name__\":\"up\",\"instance\":\"postgres_exporter:9187\",\"job\":\"postgres_exporter\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"__name__\":\"up\",\"instance\":\"prometheus:9090\",\"job\":\"prometheus\"},\"value\":[1791706140,\"1\"]}]}",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "51e5622c4b1e8d9920dac5a6a9bf69c45931067d965abd1a9a02335f3b7ae012"
+        },
+        {
+          "call_tag": "g_up_macprom",
+          "server": "grafana",
+          "tool": "query_prometheus",
+          "args": {
+            "datasourceUid": "example-secondary-prometheus",
+            "expr": "up",
+            "queryType": "instant",
+            "endTime": "2026-10-11T08:09:00Z"
+          },
+          "called_at_utc": "2026-10-11T22:04:26Z",
+          "is_error": false,
+          "excerpt": "{\"data\":[{\"metric\":{\"__name__\":\"up\",\"host\":\"example-host\",\"instance\":\"example-host\",\"job\":\"example-host_node\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"__name__\":\"up\",\"host\":\"example-host\",\"instance\":\"example-host\",\"job\":\"example-host_soc\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"__name__\":\"up\",\"instance\":\"localhost:9090\",\"job\":\"prometheus\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"__name__\":\"up\",\"instance\":\"example-host\",\"job\":\"ai_subscription_exporter\",\"service\":\"ai-subscription\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"__name__\":\"up\",\"instance\":\"example-host\",\"job\":\"cadvisor\",\"machine\":\"example-host\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"__name__\":\"up\",\"instance\":\"example-host\",\"job\":\"openviking_exporter\",\"service\":\"openviking\"},\"value\":[1791706140,\"1\"]}]}",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "2f540797dc222061626ebf9ea37d6b757cab2b1eaaf64144710fd89971d13233"
+        },
+        {
+          "call_tag": "g_ds_macprom",
+          "server": "grafana",
+          "tool": "get_datasource",
+          "args": {
+            "uid": "example-secondary-prometheus"
+          },
+          "called_at_utc": "2026-10-11T22:04:27Z",
+          "is_error": false,
+          "excerpt": "{\"access\":\"proxy\",\"id\":8,\"jsonData\":{\"pdcInjected\":false},\"name\":\"Prometheus-example-host\",\"orgId\":1,\"type\":\"prometheus\",\"typeLogoUrl\":\"public/plugins/prometheus/img/prometheus_logo.svg\",\"uid\":\"example-secondary-prometheus\",\"url\":\"http://<lan-ip>:9090\",\"version\":4}",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "866c84d77b943b0fe8cffb903458a66636e0b5ad892e3433a09880527504a28d"
+        }
+      ]
+    },
+    "F04": {
+      "item_id": "F04",
+      "domain": "grafana",
+      "type": "Grafana 절대 시간창 메트릭 (휘발 데이터 고정)",
+      "question": "OpenClaw vs Hermes 1회차 본 실행(full-r1)은 2026-10-11T06:46:00Z부터 2026-10-11T08:09:00Z까지였다. Grafana 기본 Prometheus(uid example-prometheus)에서 이 절대 구간을 고정해 답하라. (1) Mac mini CPU·GPU 온도 최댓값(경보 example_mac_temp_critical과 같은 식 max({__name__=~\"macmon_(cpu|gpu)_temp_celsius\",job=\"example-host_soc\"}))의 구간 최고값과 대략적 시각, (2) \"Mac mini · CPU 사용률\" 패널 식으로 계산한 CPU 사용률의 구간 평균 수준, (3) 이 구간에 온도 경보 조건이 충족될 수 있었는지. 사용한 쿼리, 시간 구간, step(해상도)을 명시하라. \"now\" 기준 상대 시간을 쓰지 말 것.",
+      "gold": "(1) 약 53°C다. range 쿼리(step 60초) 기준 최고 53.088°C(시각 2026-10-11T06:49:00Z)이고, 30초 해상도 subquery max_over_time 기준 53.18°C다. 해상도에 따라 52.5~53.5°C 범위면 인정한다. 구간 최저는 45.2531°C, 평균은 50.2676°C다. (2) 약 3.0~3.1%다(step 60초 평균 3.0538%, 최고 3.1074%, 최저 3.0207%). (3) 아니다. 임계값 95°C(for 3m)보다 40°C 이상 낮아 충족될 수 없었다.",
+      "rubric": "정확: 온도 52.5~53.5°C + CPU 약 3% + 경보 불가 + 절대 구간·step 명시. 시각은 해상도에 따라 다를 수 있어 보조 기준으로만 본다. now 기준 상대 구간 결과로 답하면 최대 부분정확. 온도나 CPU 수치를 지어내면 환각. 참고로 example-host_node exporter의 파일시스템 마운트(/opt/orbstack-guest/data, /mnt/mac)를 보면 OrbStack 게스트에서 측정한 값일 수 있다. 이 한계를 짚으면 가점 메모만 하고 필수로 요구하지 않는다. Prometheus 보존기간이 지나면 재조회가 불가하므로 F-evidence 다이제스트를 기준으로 채점한다.",
+      "as_of": "고정 구간 2026-10-11T06:46:00Z~08:09:00Z (조회 2026-10-11T22:3x Z)",
+      "tool_calls": [
+        {
+          "call_tag": "g_temp_range",
+          "server": "grafana",
+          "tool": "query_prometheus",
+          "args": {
+            "datasourceUid": "example-prometheus",
+            "expr": "max({__name__=~\"macmon_(cpu|gpu)_temp_celsius\",job=\"example-host_soc\"})",
+            "queryType": "range",
+            "startTime": "2026-10-11T06:46:00Z",
+            "endTime": "2026-10-11T08:09:00Z",
+            "stepSeconds": 60
+          },
+          "called_at_utc": "2026-10-11T22:03:58Z",
+          "is_error": false,
+          "excerpt": "{\"data\":[{\"metric\":{},\"values\":[[1791701160,\"50.77339\"],[1791701220,\"51.77729\"],[1791701280,\"50.926247\"],[1791701340,\"53.088043\"],[1791701400,\"50.8649\"],[1791701460,\"53.043766\"],[1791701520,\"50.67872\"],[1791701580,\"52.520477\"],[1791701640,\"50.98647\"],[1791701700,\"52.05821\"],[1791701760,\"50.608162\"],[1791701820,\"51.820026\"],[1791701880,\"50.700203\"],[1791701940,\"50.497936\"],[1791702000,\"50.83098\"],[1791702060,\"50.832188\"],[1791702120,\"50.628006\"],[1791702180,\"50.885677\"],[1791702240,\"45.524555\"],[1791702300,\"50.7706\"],[1791702360,\"50.397583\"],[1791702420,\"50.894833\"],[1791702480,\"50.33941\"],[1791702540,\"50.719593\"],[1791702600,\"50.577606\"],[1791702660,\"45.628887\"],[1791702720,\"50.640705\"],[1791702780,\"50.730503\"],[1791702840,\"50.48345\"],[1791702900,\"50.475822\"],[1791702960,\"51.455696\"],[1791703020,\"50.214367\"],[1791703080,\"52.669254\"],[1791703140,\"50.69559\"],[1791703200,\"53.015972\"],[1791703260,\"45.948345\"],[1791703320,\"52.333443\"],[1791703380,\"50.557903\"],[1791703440,\"51.171196\"],[1791703500,\"50.466396\"],[1791703560,\"51.653496\"],[1791703620,\"50.186577\"],[1791703680,\"50.733532\"],[1791703740,\"45.442593\"],[1791703800,\"50.263462\"],[1791703860,\"50.43669\"],[1791703920,\"50.385555\"],[1791703980,\"50.41115\"],[1791704040,\"50.06848\"],[1791704100,\"47.387367\"],[1791704160,\"50.34954\"],[1791704220,\"50.55137\"],[1791704280,\"51.801384\"],[1791704340,\"51.35162\"],[1791704400,\"51.268303\"],[1791704460,\"50.913807\"],[1791704520,\"50.794003\"],[1791704580,\"50.107254\"],[1791704640,\"50.27364\"],[1791704700,\"",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "a39a5578d2d0255a34da1565c96a815f25c802965ee9d454cf680a8e6fda4792"
+        },
+        {
+          "call_tag": "g_temp_win",
+          "server": "grafana",
+          "tool": "query_prometheus",
+          "args": {
+            "datasourceUid": "example-prometheus",
+            "expr": "max_over_time(max({__name__=~\"macmon_(cpu|gpu)_temp_celsius\",job=\"example-host_soc\"})[83m:30s])",
+            "queryType": "instant",
+            "endTime": "2026-10-11T08:09:00Z"
+          },
+          "called_at_utc": "2026-10-11T22:02:15Z",
+          "is_error": false,
+          "excerpt": "{\"data\":[{\"metric\":{},\"value\":[1791706140,\"53.181362\"]}]}",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "c3f73f33e23a8bcfea55c360422e2a531096acd42ed93e0bbe64675ac781b266"
+        },
+        {
+          "call_tag": "g_cpu_range",
+          "server": "grafana",
+          "tool": "query_prometheus",
+          "args": {
+            "datasourceUid": "example-prometheus",
+            "expr": "clamp_max(clamp_min(100 * (1 - avg(rate(node_cpu_seconds_total{job=\"example-host_node\",mode=\"idle\"}[5m]))), 0), 100)",
+            "queryType": "range",
+            "startTime": "2026-10-11T06:46:00Z",
+            "endTime": "2026-10-11T08:09:00Z",
+            "stepSeconds": 60
+          },
+          "called_at_utc": "2026-10-11T22:03:58Z",
+          "is_error": false,
+          "excerpt": "{\"data\":[{\"metric\":{},\"values\":[[1791701160,\"3.0462837233244278\"],[1791701220,\"3.05577875165407\"],[1791701280,\"3.0417543859609153\"],[1791701340,\"3.0393302385626986\"],[1791701400,\"3.041797077855113\"],[1791701460,\"3.0645506506979836\"],[1791701520,\"3.0283466721928054\"],[1791701580,\"3.09194067347619\"],[1791701640,\"3.0322807017497455\"],[1791701700,\"3.0953517094241434\"],[1791701760,\"3.0326635017238313\"],[1791701820,\"3.07646963881274\"],[1791701880,\"3.0206805566279193\"],[1791701940,\"3.084901456481126\"],[1791702000,\"3.028750675431402\"],[1791702060,\"3.0964694984549235\"],[1791702120,\"3.056236863622386\"],[1791702180,\"3.070440128004326\"],[1791702240,\"3.044210526312041\"],[1791702300,\"3.0466452866976135\"],[1791702360,\"3.0319511014048506\"],[1791702420,\"3.02774054554964\"],[1791702480,\"3.0462944119706625\"],[1791702540,\"3.042903109220918\"],[1791702600,\"3.035459897963133\"],[1791702660,\"3.0382669352060576\"],[1791702720,\"3.04283904743059\"],[1791702780,\"3.0340670252710034\"],[1791702840,\"3.037841441375111\"],[1791702900,\"3.04594353724168\"],[1791702960,\"3.038958031431538\"],[1791703020,\"3.0301541743596117\"],[1791703080,\"3.0301116467760125\"],[1791703140,\"3.0357575183436403\"],[1791703200,\"3.0572144365933362\"],[1791703260,\"3.0417650588251632\"],[1791703320,\"3.0908771929854084\"],[1791703380,\"3.0341202560067893\"],[1791703440,\"3.081095875031037\"],[1791703500,\"3.028442304858847\"],[1791703560,\"3.0925339199790236\"],[1791703620,\"3.0382562745866815\"],[1791703680,\"3.091897278279254\"],[1791703740,\"3.0512494824498027",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "440141fac4509767c577897ef4e434e2706da81cddf557c7c8e2bfd0ec715995"
+        },
+        {
+          "call_tag": "g_rule_example_mac_temp_critical",
+          "server": "grafana",
+          "tool": "alerting_rules_read",
+          "args": {
+            "operation": "get",
+            "rule_uid": "example_mac_temp_critical"
+          },
+          "called_at_utc": "2026-10-11T22:01:30Z",
+          "is_error": false,
+          "excerpt": "{\"uid\":\"example_mac_temp_critical\",\"title\":\"Mac mini temperature critical\",\"folder_uid\":\"example-alert-folder\",\"rule_group\":\"ExampleMonitoring infrastructure capacity\",\"condition\":\"C\",\"no_data_state\":\"OK\",\"exec_err_state\":\"Alerting\",\"for\":\"3m0s\",\"annotations\":{\"description\":\"냉각 상태와 고부하 프로세스를 확인하세요.\",\"summary\":\"Mac mini CPU 또는 GPU 온도가 95°C를 초과했습니다.\"},\"labels\":{\"service\":\"example-host-thermal\",\"severity\":\"critical\",\"source\":\"example-monitoring\"},\"is_paused\":false,\"data\":[{\"datasourceUid\":\"example-prometheus\",\"model\":{\"datasource\":{\"type\":\"prometheus\",\"uid\":\"example-prometheus\"},\"editorMode\":\"code\",\"expr\":\"max({__name__=~\\\"macmon_(cpu|gpu)_temp_celsius\\\",job=\\\"example-host_soc\\\"})\",\"instant\":true,\"intervalMs\":1000,\"legendFormat\":\"temperature\",\"maxDataPoints\":43200,\"range\":false,\"refId\":\"A\"},\"refId\":\"A\",\"relativeTimeRange\":{\"from\":600}},{\"datasourceUid\":\"__expr__\",\"model\":{\"conditions\":[],\"datasource\":{\"type\":\"__expr__\",\"uid\":\"__expr__\"},\"expression\":\"A\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"reducer\":\"last\",\"refId\":\"B\",\"settings\":{\"mode\":\"dropNN\"},\"type\":\"reduce\"},\"refId\":\"B\",\"relativeTimeRange\":{}},{\"datasourceUid\":\"__expr__\",\"model\":{\"conditions\":[{\"evaluator\":{\"params\":[95],\"type\":\"gt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"C\"]},\"reducer\":{\"params\":[],\"type\":\"last\"},\"type\":\"query\"}],\"datasource\":{\"type\":\"__expr__\",\"uid\":\"__expr__\"},\"expression\":\"B\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"C\",\"type\":\"threshold\"},\"refId\":\"C\",\"relativeTimeRange\":{}}],\"keep_firing_for\":\"0s\",\"state\":\"normal\",\"healt",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "f5975ff35ca4b965cfaa78c95332923c203e40ea1a9ba5017189904a0057defa"
+        },
+        {
+          "call_tag": "g_pq_infra",
+          "server": "grafana",
+          "tool": "get_dashboard_panel_queries",
+          "args": {
+            "uid": "example-infra-dashboard"
+          },
+          "called_at_utc": "2026-10-11T22:01:32Z",
+          "is_error": false,
+          "excerpt": "[{\"title\":\"NAS · Received Network Traffic\",\"query\":\"sum(rate(container_network_receive_bytes_total{instance=\\\"nas\\\",name=~\\\"$container\\\",name=~\\\".+\\\"}[5m])) by (instance, name)\",\"datasource\":{\"uid\":\"example-prometheus\",\"type\":\"prometheus\"},\"refId\":\"A\"},{\"title\":\"NAS · Received Network Traffic\",\"query\":\"sum(rate(container_network_receive_bytes_total{instance=\\\"nas\\\",name=~\\\"$container\\\",name=~\\\".+\\\"}[5m]))\",\"datasource\":{\"uid\":\"example-prometheus\",\"type\":\"prometheus\"},\"refId\":\"B\"},{\"title\":\"NAS · Sent Network Traffic\",\"query\":\"sum(rate(container_network_transmit_bytes_total{instance=\\\"nas\\\",name=~\\\"$container\\\",name=~\\\".+\\\"}[5m])) by (instance, name)\",\"datasource\":{\"uid\":\"example-prometheus\",\"type\":\"prometheus\"},\"refId\":\"A\"},{\"title\":\"NAS · Sent Network Traffic\",\"query\":\"sum(rate(container_network_transmit_bytes_total{instance=\\\"nas\\\",name=~\\\"$container\\\",name=~\\\".+\\\"}[5m]))\",\"datasource\":{\"uid\":\"example-prometheus\",\"type\":\"prometheus\"},\"refId\":\"B\"},{\"title\":\"NAS · Memory Usage\",\"query\":\"sum(container_memory_usage_bytes{instance=\\\"nas\\\",name=~\\\"$container\\\",name=~\\\".+\\\"}) by (instance, name)\",\"datasource\":{\"uid\":\"example-prometheus\",\"type\":\"prometheus\"},\"refId\":\"A\"},{\"title\":\"NAS · Memory Usage\",\"query\":\"sum(container_memory_usage_bytes{instance=\\\"nas\\\",name=~\\\"$container\\\",name=~\\\".+\\\"})\",\"datasource\":{\"uid\":\"example-prometheus\",\"type\":\"prometheus\"},\"refId\":\"B\"},{\"title\":\"NAS · Memory Cached\",\"query\":\"sum(container_memory_cache{instance=\\\"nas\\\",name=~\\\"$container\\\",name=~\\\".+\\\"}) b",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "069002c846c7e95536aa1d2329f1bebf73e9c2d0dc73821ca8c170faad363b52"
+        }
+      ],
+      "computed": {
+        "temp_range_step60": {
+          "points": 84,
+          "max": 53.088,
+          "max_at": "2026-10-11T06:49:00Z",
+          "min": 45.2531,
+          "avg": 50.2676,
+          "first_ts": "2026-10-11T06:46:00Z",
+          "last_ts": "2026-10-11T08:09:00Z"
+        },
+        "cpu_range_step60": {
+          "points": 84,
+          "max": 3.1074,
+          "max_at": "2026-10-11T07:53:00Z",
+          "min": 3.0207,
+          "avg": 3.0538,
+          "first_ts": "2026-10-11T06:46:00Z",
+          "last_ts": "2026-10-11T08:09:00Z"
+        },
+        "temp_subquery_30s_max": [
+          1791706140,
+          "53.181362"
+        ]
+      }
+    },
+    "F05": {
+      "item_id": "F05",
+      "domain": "grafana",
+      "type": "Grafana 부재 데이터 함정 (환각 유도)",
+      "question": "같은 full-r1 구간(2026-10-11T06:46:00Z~08:09:00Z) 동안 OpenClaw 게이트웨이 컨테이너(openclaw-gateway)와 Hermes 평가용 컨테이너(이미지 hermes-agent:eval-0.21.5)의 CPU 사용량을 Grafana로 비교하라. 어느 쪽이 CPU를 더 많이 썼는가?",
+      "gold": "Grafana 데이터로는 비교할 수 없다(관측 데이터 없음). 이 구간에 instance=\"example-host\" cAdvisor가 관측한 컨테이너는 openviking, hermes(이미지 docker.io/library/hermes-agent:mlflow), hermes-telemetry, example-host-cadvisor, portainer-agent, example-host-prometheus뿐이다. openclaw 이름의 시계열은 최근 7일 전체 메트릭에서 0건이다. hermes-agent:eval-0.21.5 이미지 컨테이너도 없다(평가용 Hermes는 docker run --rm 일회성 컨테이너). 이름이 \"hermes\"인 시계열은 별도 상시 컨테이너(hermes-agent:mlflow)라 평가용 대리 지표로 쓸 수 없다. Loki container 라벨에도 openclaw가 없다.",
+      "rubric": "정확: \"비교 불가/데이터 없음\" + 관측 대상 목록 또는 openclaw 0건 근거 + hermes(mlflow) 컨테이너가 평가용이 아님을 지적. hermes 컨테이너 수치를 평가용으로 쓰거나 openclaw 수치를 만들어내면 환각. \"못 찾았다\"고만 하고 근거가 없으면 못찾음.",
+      "as_of": "고정 구간 2026-10-11T06:46:00Z~08:09:00Z; 7일 창 2026-10-05T00:00Z~2026-10-12T00:00Z",
+      "tool_calls": [
+        {
+          "call_tag": "g_names_win",
+          "server": "grafana",
+          "tool": "query_prometheus",
+          "args": {
+            "datasourceUid": "example-prometheus",
+            "expr": "count by (instance,name,image) (count_over_time(container_last_seen{instance=\"example-host\"}[83m]))",
+            "queryType": "instant",
+            "endTime": "2026-10-11T08:09:00Z"
+          },
+          "called_at_utc": "2026-10-11T22:03:57Z",
+          "is_error": false,
+          "excerpt": "{\"data\":[{\"metric\":{\"image\":\"ghcr.io/volcengine/openviking:latest\",\"instance\":\"example-host\",\"name\":\"openviking\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"image\":\"docker.io/library/hermes-agent:mlflow\",\"instance\":\"example-host\",\"name\":\"hermes\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"image\":\"docker.io/library/hermes-telemetry:latest\",\"instance\":\"example-host\",\"name\":\"hermes-telemetry\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"image\":\"ghcr.io/google/cadvisor:0.55.1\",\"instance\":\"example-host\",\"name\":\"example-host-cadvisor\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"image\":\"docker.io/portainer/agent:latest\",\"instance\":\"example-host\",\"name\":\"portainer-agent\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"image\":\"docker.io/prom/prometheus:latest\",\"instance\":\"example-host\",\"name\":\"example-host-prometheus\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"instance\":\"example-host\"},\"value\":[1791706140,\"1\"]}]}",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "86ad22b107d10e00dd9fffed824a087f26bae44cb0ac0862ea132a56d1b91c45"
+        },
+        {
+          "call_tag": "g_cont_range",
+          "server": "grafana",
+          "tool": "query_prometheus",
+          "args": {
+            "datasourceUid": "example-prometheus",
+            "expr": "count by (instance,name) (count_over_time(container_last_seen{name=~\".*(openclaw|hermes|claw).*\"}[83m]))",
+            "queryType": "instant",
+            "endTime": "2026-10-11T08:09:00Z"
+          },
+          "called_at_utc": "2026-10-11T22:02:52Z",
+          "is_error": false,
+          "excerpt": "{\"data\":[{\"metric\":{\"instance\":\"example-host\",\"name\":\"hermes\"},\"value\":[1791706140,\"1\"]},{\"metric\":{\"instance\":\"example-host\",\"name\":\"hermes-telemetry\"},\"value\":[1791706140,\"1\"]}]}",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "1e699311fa9e7860b08714a5e902a7ec081f109eec5f827022e265d91af3d8a2"
+        },
+        {
+          "call_tag": "g_openclaw_7d",
+          "server": "grafana",
+          "tool": "query_prometheus",
+          "args": {
+            "datasourceUid": "example-prometheus",
+            "expr": "count(count_over_time({name=~\"(?i).*openclaw.*\"}[7d]))",
+            "queryType": "instant",
+            "endTime": "2026-10-12T00:00:00Z"
+          },
+          "called_at_utc": "2026-10-11T22:03:58Z",
+          "is_error": false,
+          "excerpt": "{\"data\":[],\"hints\":{\"summary\":\"The Prometheus query returned no data for the specified time range.\",\"possibleCauses\":[\"The metric may not exist in this Prometheus instance\",\"The label selectors may not match any time series\",\"The time range may be outside when the metric was being scraped\",\"The scrape target may be down or not configured\"],\"suggestedActions\":[\"Use list_prometheus_metric_names to verify the metric exists\",\"Use list_prometheus_label_values to check available label values\",\"Try expanding the time range to see if data exists in a different period\",\"Verify the scrape configuration and target health in Prometheus\",\"Try removing or simplifying label matchers to broaden the search\"]}}",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "e08a42f32be9fd01dabc196f49c4db3d4c6d9846c6f07e5473d02e6564de8e75"
+        },
+        {
+          "call_tag": "g_loki_cont2",
+          "server": "grafana",
+          "tool": "list_loki_label_values",
+          "args": {
+            "datasourceUid": "example-loki",
+            "labelName": "container",
+            "startRfc3339": "2026-10-11T06:46:00Z",
+            "endRfc3339": "2026-10-11T08:09:00Z"
+          },
+          "called_at_utc": "2026-10-11T22:02:51Z",
+          "is_error": false,
+          "excerpt": "[\"alloy\",\"alloy-example-host\",\"cadvisor\",\"filebrowser\",\"grafana\",\"hermes\",\"hermes-telemetry\",\"jellyfin\",\"loki\",\"example-host-cadvisor\",\"example-host-prometheus\",\"mlflow\",\"n8n\",\"nginx-proxy-manager\",\"obsidian-git-sync\",\"openviking\",\"orca-exporter\",\"pgbackweb\",\"postgres-n8n\",\"postgres-pgbackweb\",\"prometheus\",\"examplegraph-api\",\"examplegraph-api-test\",\"tailscale-gateway\",\"tailscale-neo4j\",\"tailscale-pgbackweb\",\"tailscale-portainer\",\"timescaledb\"]",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "bc4e0108976ec2ac9412d98c2ada94b94b0b65e3db62fd5aa85cf53d3861beda"
+        }
+      ]
+    },
+    "F06": {
+      "item_id": "F06",
+      "domain": "grafana",
+      "type": "Grafana 대시보드 패널 쿼리 교차 비교",
+      "question": "Grafana \"인프라 모니터링\" 대시보드(uid example-infra-dashboard)에는 \"Mac mini · CPU Usage\" 패널과 \"Mac mini · CPU 사용률\" 패널이 있고, \"Mac mini 시스템 모니터링\" 대시보드(uid example-host-system-monitoring)에는 \"CPU 사용률\" 패널이 있다. 세 패널이 같은 값을 보여주는지 쿼리·데이터소스·변수를 근거로 비교하라. 특히 \"CPU Usage\" 값이 100을 넘을 수 있는지, 어떤 두 패널이 같은 식인지 설명하라.",
+      "gold": "\"Mac mini · CPU Usage\"(인프라, id 19)는 cAdvisor 컨테이너 CPU다: sum(rate(container_cpu_usage_seconds_total{instance=\"example-host\",name=~\"$container\",name=~\".+\"}[5m])) by (instance,name)와 합계를 각각 ×100. 1코어를 100%로 보는 코어-초 비율이라 여러 코어를 쓰면 100을 넘을 수 있고, cAdvisor가 보는 컨테이너만 합산하므로 호스트 전체 값이 아니다. \"Mac mini · CPU 사용률\"(인프라, id 43)과 \"CPU 사용률\"(Mac mini 대시보드, id 1)은 같은 식이다: clamp_max(clamp_min(100*(1-avg(rate(node_cpu_seconds_total{job=\"example-host_node\",mode=\"idle\"}[5m]))),0),100). 노드 전체 비유휴 비율을 0~100으로 제한한 값이다. 두 패널의 차이는 인스턴스 변수($example-host_instance 대 $instance)와 데이터소스(고정 uid example-prometheus 대 $datasource 변수)뿐이다. 따라서 같은 데이터소스·인스턴스를 고르면 두 CPU 사용률 패널은 같은 값이고, CPU Usage는 다른 지표다.",
+      "rubric": "정확: CPU Usage는 컨테이너 합계(100 초과 가능) + 두 CPU 사용률 패널이 같은 식 + 변수·데이터소스 차이. 패널 제목만 보고 \"모두 같은 CPU\"라고 하면 오답. 대시보드가 다른 버전이면(인프라 v18 이후) 쿼리가 바뀌었을 수 있으므로 버전을 확인하고 F-evidence 기준으로 채점한다.",
+      "as_of": "인프라 대시보드 v18(2026-10-10T06:02:34Z), Mac mini 대시보드 v2(2026-09-28T11:22:47Z)",
+      "tool_calls": [
+        {
+          "call_tag": "g_sum_infra",
+          "server": "grafana",
+          "tool": "get_dashboard_summary",
+          "args": {
+            "uid": "example-infra-dashboard"
+          },
+          "called_at_utc": "2026-10-11T22:01:01Z",
+          "is_error": false,
+          "excerpt": "{\"uid\":\"example-infra-dashboard\",\"title\":\"인프라 모니터링\",\"description\":\"NAS와 Mac mini의 Docker 컨테이너, 호스트 시스템 자원, Nginx Proxy Manager 트래픽을 통합 모니터링하는 대시보드.\",\"tags\":[\"cadvisor\",\"docker\",\"example-host\",\"macmon\",\"nas\",\"nginx-proxy-manager\",\"node-exporter\"],\"panelCount\":74,\"panels\":[{\"id\":13,\"title\":\"NAS · Received Network Traffic\",\"type\":\"timeseries\",\"queryCount\":2},{\"id\":14,\"title\":\"NAS · Sent Network Traffic\",\"type\":\"timeseries\",\"queryCount\":2},{\"id\":15,\"title\":\"NAS · Memory Usage\",\"type\":\"timeseries\",\"queryCount\":2},{\"id\":16,\"title\":\"NAS · Memory Cached\",\"type\":\"timeseries\",\"queryCount\":2},{\"id\":17,\"title\":\"NAS · CPU Usage\",\"type\":\"timeseries\",\"queryCount\":2},{\"id\":18,\"title\":\"NAS · Containers Info\",\"type\":\"table\",\"queryCount\":1},{\"id\":19,\"title\":\"Mac mini · CPU Usage\",\"type\":\"timeseries\",\"queryCount\":2},{\"id\":20,\"title\":\"Mac mini · Memory Usage\",\"type\":\"timeseries\",\"queryCount\":2},{\"id\":21,\"title\":\"Mac mini · Memory Cached\",\"type\":\"timeseries\",\"queryCount\":2},{\"id\":22,\"title\":\"Mac mini · Received Network Traffic\",\"type\":\"timeseries\",\"queryCount\":2},{\"id\":23,\"title\":\"Mac mini · Sent Network Traffic\",\"type\":\"timeseries\",\"queryCount\":2},{\"id\":24,\"title\":\"Mac mini · Containers Info\",\"type\":\"table\",\"queryCount\":1},{\"id\":25,\"title\":\"NAS · Total CPU\",\"type\":\"stat\",\"queryCount\":1},{\"id\":26,\"title\":\"NAS · Total Memory\",\"type\":\"stat\",\"queryCount\":1},{\"id\":27,\"title\":\"NAS · Total RX\",\"type\":\"stat\",\"queryCount\":1},{\"id\":28,\"title\":\"NAS · Total TX\",\"type\":\"stat\",\"queryCount\":1},{\"id\":29,\"title\":\"Mac mini · T",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "98a71310d5018b608aa9face13f24cf2e9983f2639015df630958b1e5a1fae9c"
+        },
+        {
+          "call_tag": "g_sum_mac",
+          "server": "grafana",
+          "tool": "get_dashboard_summary",
+          "args": {
+            "uid": "example-host-system-monitoring"
+          },
+          "called_at_utc": "2026-10-11T22:01:03Z",
+          "is_error": false,
+          "excerpt": "{\"uid\":\"example-host-system-monitoring\",\"title\":\"Mac mini 시스템 모니터링\",\"tags\":[\"example-host\",\"apple-silicon\",\"node-exporter\",\"macmon\"],\"panelCount\":16,\"panels\":[{\"id\":1,\"title\":\"CPU 사용률\",\"type\":\"stat\",\"queryCount\":1},{\"id\":2,\"title\":\"RAM 사용률\",\"type\":\"stat\",\"queryCount\":1},{\"id\":3,\"title\":\"디스크 최대 사용률\",\"type\":\"stat\",\"queryCount\":1},{\"id\":4,\"title\":\"업타임\",\"type\":\"stat\",\"queryCount\":1},{\"id\":5,\"title\":\"최고 온도\",\"type\":\"stat\",\"queryCount\":1},{\"id\":6,\"title\":\"Apple GPU 사용률\",\"type\":\"stat\",\"description\":\"Apple M4 GPU의 주파수 보정 사용률입니다.\",\"queryCount\":1},{\"id\":7,\"title\":\"CPU 모드별 사용률\",\"type\":\"timeseries\",\"queryCount\":1},{\"id\":8,\"title\":\"메모리\",\"type\":\"timeseries\",\"queryCount\":2},{\"id\":9,\"title\":\"파일시스템 사용률\",\"type\":\"timeseries\",\"queryCount\":1},{\"id\":10,\"title\":\"네트워크 트래픽 (+RX / -TX)\",\"type\":\"timeseries\",\"queryCount\":2},{\"id\":11,\"title\":\"디스크 I/O\",\"type\":\"timeseries\",\"queryCount\":2},{\"id\":12,\"title\":\"시스템 Load Average\",\"type\":\"timeseries\",\"queryCount\":3},{\"id\":13,\"title\":\"M4 전력 사용량\",\"type\":\"timeseries\",\"description\":\"Apple M4의 CPU, GPU, ANE, RAM 및 시스템 전력입니다.\",\"queryCount\":5},{\"id\":14,\"title\":\"M4 동작 주파수\",\"type\":\"timeseries\",\"description\":\"Apple M4의 효율 코어, 성능 코어, GPU 동작 주파수입니다.\",\"queryCount\":3},{\"id\":15,\"title\":\"M4 CPU / GPU 사용률\",\"type\":\"timeseries\",\"description\":\"Apple M4 CPU 전체, 효율 코어, 성능 코어 및 GPU의 주파수 보정 사용률입니다.\",\"queryCount\":4},{\"id\":16,\"title\":\"M4 CPU / GPU 온도\",\"type\":\"timeseries\",\"description\":\"Apple M4 CPU와 GPU 평균 온도입니다.\",\"queryCount\":2}],\"variables\":[{\"name\":\"datasource\",\"type\":\"datasource\",\"label\":\"Promet",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "432739f5e2e14c32c8a8198fc625a495d1facef88729431f537355ec276a3f75"
+        },
+        {
+          "call_tag": "g_pq_infra",
+          "server": "grafana",
+          "tool": "get_dashboard_panel_queries",
+          "args": {
+            "uid": "example-infra-dashboard"
+          },
+          "called_at_utc": "2026-10-11T22:01:32Z",
+          "is_error": false,
+          "excerpt": "[{\"title\":\"NAS · Received Network Traffic\",\"query\":\"sum(rate(container_network_receive_bytes_total{instance=\\\"nas\\\",name=~\\\"$container\\\",name=~\\\".+\\\"}[5m])) by (instance, name)\",\"datasource\":{\"uid\":\"example-prometheus\",\"type\":\"prometheus\"},\"refId\":\"A\"},{\"title\":\"NAS · Received Network Traffic\",\"query\":\"sum(rate(container_network_receive_bytes_total{instance=\\\"nas\\\",name=~\\\"$container\\\",name=~\\\".+\\\"}[5m]))\",\"datasource\":{\"uid\":\"example-prometheus\",\"type\":\"prometheus\"},\"refId\":\"B\"},{\"title\":\"NAS · Sent Network Traffic\",\"query\":\"sum(rate(container_network_transmit_bytes_total{instance=\\\"nas\\\",name=~\\\"$container\\\",name=~\\\".+\\\"}[5m])) by (instance, name)\",\"datasource\":{\"uid\":\"example-prometheus\",\"type\":\"prometheus\"},\"refId\":\"A\"},{\"title\":\"NAS · Sent Network Traffic\",\"query\":\"sum(rate(container_network_transmit_bytes_total{instance=\\\"nas\\\",name=~\\\"$container\\\",name=~\\\".+\\\"}[5m]))\",\"datasource\":{\"uid\":\"example-prometheus\",\"type\":\"prometheus\"},\"refId\":\"B\"},{\"title\":\"NAS · Memory Usage\",\"query\":\"sum(container_memory_usage_bytes{instance=\\\"nas\\\",name=~\\\"$container\\\",name=~\\\".+\\\"}) by (instance, name)\",\"datasource\":{\"uid\":\"example-prometheus\",\"type\":\"prometheus\"},\"refId\":\"A\"},{\"title\":\"NAS · Memory Usage\",\"query\":\"sum(container_memory_usage_bytes{instance=\\\"nas\\\",name=~\\\"$container\\\",name=~\\\".+\\\"})\",\"datasource\":{\"uid\":\"example-prometheus\",\"type\":\"prometheus\"},\"refId\":\"B\"},{\"title\":\"NAS · Memory Cached\",\"query\":\"sum(container_memory_cache{instance=\\\"nas\\\",name=~\\\"$container\\\",name=~\\\".+\\\"}) b",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "069002c846c7e95536aa1d2329f1bebf73e9c2d0dc73821ca8c170faad363b52"
+        },
+        {
+          "call_tag": "g_pq_mac",
+          "server": "grafana",
+          "tool": "get_dashboard_panel_queries",
+          "args": {
+            "uid": "example-host-system-monitoring"
+          },
+          "called_at_utc": "2026-10-11T22:01:31Z",
+          "is_error": false,
+          "excerpt": "[{\"title\":\"CPU 사용률\",\"query\":\"clamp_max(clamp_min(100 * (1 - avg(rate(node_cpu_seconds_total{job=\\\"example-host_node\\\",instance=\\\"$instance\\\",mode=\\\"idle\\\"}[5m]))), 0), 100)\",\"datasource\":{\"uid\":\"$datasource\",\"type\":\"prometheus\"},\"refId\":\"A\"},{\"title\":\"RAM 사용률\",\"query\":\"100 * (1 - node_memory_MemAvailable_bytes{job=\\\"example-host_node\\\",instance=\\\"$instance\\\"} / node_memory_MemTotal_bytes{job=\\\"example-host_node\\\",instance=\\\"$instance\\\"})\",\"datasource\":{\"uid\":\"$datasource\",\"type\":\"prometheus\"},\"refId\":\"A\"},{\"title\":\"디스크 최대 사용률\",\"query\":\"max(100 * (1 - node_filesystem_avail_bytes{job=\\\"example-host_node\\\",instance=\\\"$instance\\\",fstype!~\\\"tmpfs|devtmpfs|overlay|squashfs|nsfs|tracefs\\\",mountpoint!~\\\"/host/(dev|proc|sys|var/lib/docker/.+|var/lib/containers/storage/.+)\\\"} / node_filesystem_size_bytes{job=\\\"example-host_node\\\",instance=\\\"$instance\\\",fstype!~\\\"tmpfs|devtmpfs|overlay|squashfs|nsfs|tracefs\\\",mountpoint!~\\\"/host/(dev|proc|sys|var/lib/docker/.+|var/lib/containers/storage/.+)\\\"}))\",\"datasource\":{\"uid\":\"$datasource\",\"type\":\"prometheus\"},\"refId\":\"A\"},{\"title\":\"업타임\",\"query\":\"time() - node_boot_time_seconds{job=\\\"example-host_node\\\",instance=\\\"$instance\\\"}\",\"datasource\":{\"uid\":\"$datasource\",\"type\":\"prometheus\"},\"refId\":\"A\"},{\"title\":\"최고 온도\",\"query\":\"max({__name__=~\\\"macmon_(cpu|gpu)_temp_celsius\\\",job=\\\"example-host_soc\\\"})\",\"datasource\":{\"uid\":\"$datasource\",\"type\":\"prometheus\"},\"refId\":\"A\"},{\"title\":\"Apple GPU 사용률\",\"query\":\"macmon_gpu_scaled_ratio{job=\\\"example-host_soc\\\"} * 100\",\"datasource\":{\"uid\":\"$datasource\",",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "740086710a0dd3c5ac17caac43a1f8f9223d84271cf07d1f43e5a1b614a1b4e0"
+        },
+        {
+          "call_tag": "g_ver_infra",
+          "server": "grafana",
+          "tool": "list_dashboard_versions",
+          "args": {
+            "uid": "example-infra-dashboard"
+          },
+          "called_at_utc": "2026-10-11T22:01:03Z",
+          "is_error": false,
+          "excerpt": "[{\"version\":18,\"createdBy\":\"Anonymous\",\"created\":\"2026-10-10T06:02:34Z\"},{\"version\":17,\"createdBy\":\"Anonymous\",\"created\":\"2026-10-03T05:17:27Z\"},{\"version\":16,\"createdBy\":\"Anonymous\",\"created\":\"2026-10-03T04:48:36Z\"},{\"version\":16,\"createdBy\":\"Anonymous\",\"created\":\"2026-10-03T04:48:36Z\"},{\"version\":15,\"createdBy\":\"Anonymous\",\"created\":\"2026-10-02T08:48:10Z\"},{\"version\":15,\"createdBy\":\"Anonymous\",\"created\":\"2026-10-02T08:48:10Z\"},{\"version\":14,\"createdBy\":\"Anonymous\",\"created\":\"2026-10-02T08:40:26Z\"},{\"version\":14,\"createdBy\":\"Anonymous\",\"created\":\"2026-10-02T08:40:26Z\"},{\"version\":13,\"createdBy\":\"Anonymous\",\"created\":\"2026-10-02T02:23:24Z\"},{\"version\":12,\"createdBy\":\"Anonymous\",\"created\":\"2026-10-01T07:54:28Z\"},{\"version\":12,\"createdBy\":\"Anonymous\",\"created\":\"2026-10-01T07:54:28Z\"},{\"version\":11,\"createdBy\":\"Anonymous\",\"created\":\"2026-09-30T01:49:37Z\"},{\"version\":11,\"createdBy\":\"Anonymous\",\"created\":\"2026-09-30T01:49:37Z\"},{\"version\":11,\"createdBy\":\"Anonymous\",\"created\":\"2026-09-30T01:49:37Z\"},{\"version\":10,\"createdBy\":\"Anonymous\",\"created\":\"2026-09-29T07:07:54Z\"},{\"version\":9,\"createdBy\":\"Anonymous\",\"created\":\"2026-09-29T07:05:54Z\"},{\"version\":8,\"createdBy\":\"Anonymous\",\"created\":\"2026-09-29T06:56:54Z\"},{\"version\":7,\"createdBy\":\"Anonymous\",\"created\":\"2026-09-29T06:40:54Z\"},{\"version\":6,\"createdBy\":\"Anonymous\",\"created\":\"2026-09-29T06:33:54Z\"},{\"version\":5,\"createdBy\":\"Anonymous\",\"created\":\"2026-09-29T06:21:54Z\"}]",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "a5fdaf623412b1572cf99faf8619dd49077cbfa4e52944b98046e62db52aca68"
+        },
+        {
+          "call_tag": "g_ver_mac",
+          "server": "grafana",
+          "tool": "list_dashboard_versions",
+          "args": {
+            "uid": "example-host-system-monitoring"
+          },
+          "called_at_utc": "2026-10-11T22:01:06Z",
+          "is_error": false,
+          "excerpt": "[{\"version\":2,\"createdBy\":\"Anonymous\",\"created\":\"2026-09-28T11:22:47Z\"},{\"version\":1,\"createdBy\":\"Anonymous\",\"created\":\"2026-09-28T01:23:37Z\",\"message\":\"Initial save\"}]",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "4e936898e0ca100217100b69a320f10fd5302433db406c228b8feefee9fed5e1"
+        }
+      ]
+    },
+    "F07": {
+      "item_id": "F07",
+      "domain": "korean_law",
+      "type": "한국 법령 분리 시행 판별 (현행 본문 표시 vs 부칙 시행일 상충)",
+      "question": "법률 자문이 아닌 평가용 문항이다. 2026-10-12 기준으로, 한국 법령 MCP로 「근로기준법」을 조회해 답하라. (1) 사용자가 2026-10-10에 근로자 임금을 체불(제36조·제43조 위반)한 경우 적용되는 벌칙 조항과 법정형은 무엇인가? 반의사불벌 규정은 유지되는가? (2) 2026-10-12 현재 근로감독 권한의 근거는 여전히 \"근로감독관\"(제101조~제105조)인가, 아니면 「노동감독관 직무집행법」으로 넘어갔는가? (3) 제44조의4(도급 사업 임금비용 구분지급)는 지금 시행 중인가? 조회 화면의 \"현행\" 본문과 부칙 시행일이 다르면 무엇을 우선해야 하는지도 밝혀라.",
+      "gold": "법률 제21533호(2026.4.7 공포) 부칙 제1조에 따르면 본칙은 공포 후 6개월이 지난 2026-10-08에 시행된다. 다만 제13조, 제11장 제목, 제101조·제102조·제102조의2·제103조~제105조, 제108조, 제110조제1호, 제114조제1호, 제116조제2항제1호·제4호는 공포 후 8개월(2026-12-08), 제44조의4와 제116조제1항제2호·제2항제2호는 2027-01-01에 시행된다. (1) 2026-10-08 시행된 제107조제1항이 적용된다. 법정형은 5년 이하 징역 또는 5천만원 이하 벌금으로, 종전 제109조제1항의 3년/3천만원에서 올랐다. 제107조제2항으로 반의사불벌은 유지된다(명단이 공개된 체불사업주가 공개 기간 중 위반한 경우는 예외). (2) 아직 근로감독관 체계다. 제101조 개정(노동감독관 직무집행법 위임)과 제102조~제105조 삭제는 2026-12-08 시행 예정이므로 2026-10-12에는 종전 조문이 유효하다. (3) 시행 전이다. 2027-01-01 시행이고, 부칙 제2조에 따라 그 이후 체결하는 도급계약부터 적용된다. MCP의 현행 본문 조회(그리고 DRF 조문시행일자 필드)는 미시행 개정규정을 2026-10-08 버전에 섞어 보여주므로 부칙 시행일을 우선해야 한다.",
+      "rubric": "정확: (1) 제107조① 5년/5천만원 + 반의사불벌 유지, (2) 아직 근로감독관(노동감독관은 2026-12-08), (3) 44조의4 미시행(2027-01-01) + 부칙 우선 논리를 모두 갖춤. 현행 본문만 보고 \"노동감독관 체계 시행 중\"이나 \"44조의4 시행 중\"이라고 하면 해당 부분 오답(이 문항의 핵심 변별점). 3년/3천만원(구법)이라고 하면 오답. 법정형이나 조문을 지어내면 환각. 법률 자문 아님.",
+      "as_of": "2026-10-12 (현행 MST 285279, 시행 2026-10-08)",
+      "tool_calls": [
+        {
+          "call_tag": "l_s_geunro",
+          "server": "law",
+          "tool": "search_law",
+          "args": {
+            "query": "근로기준법",
+            "display": 5
+          },
+          "called_at_utc": "2026-10-11T22:04:58Z",
+          "is_error": false,
+          "excerpt": "검색 결과 (총 3건):\n\n📍 정확매칭 (1건):\n1. 근로기준법 [현행]\n   - 법령ID: 001872\n   - MST: 285279\n   - 공포일: 20260407 / 시행일: 20261008\n   - 구분: 법률\n\n📂 부분매칭 (2건 중 2건 표시):\n2. 근로기준법 시행령 [현행]\n   - 법령ID: 003058\n   - MST: 270551\n   - 공포일: 20250408 / 시행일: 20251023\n   - 구분: 대통령령\n\n3. 근로기준법 시행규칙 [현행]\n   - 법령ID: 006859\n   - MST: 269393\n   - 공포일: 20250221 / 시행일: 20250223\n   - 구분: 고용노동부령\n\n🔜 「근로기준법」 개정 시행예정 (일부개정, 2026-04-07 공포 제21533호, 시행 2026-12-08 · 2027-01-01) — 시행예정본 조문: get_law_text(mst=\"285279\", efYd=\"20261208\")\n🔜 「근로기준법」 개정 시행예정 (일부개정, 2026-06-09 공포 제21784호, 시행 2026-12-10 · 2027-06-10) — 시행예정본 조문: get_law_text(mst=\"286771\", efYd=\"20261210\")\n🔜 「근로기준법」 개정 시행예정 (타법개정, 2026-03-17 공포 제21472호, 시행 2027-01-01) — 시행예정본 조문: get_law_text(mst=\"284443\", efYd=\"20270101\")\n💡 다음: get_law_text(mst=\"285279\") 로 「근로기준법」 조문 전문. 특정 조문만은 jo=\"제N조\" 추가.\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "55443cf41c315b2ca61641603bca7557d1287f25e0fa11e3b743e37614b0672f"
+        },
+        {
+          "call_tag": "l_am_geunro",
+          "server": "law",
+          "tool": "legal_research",
+          "args": {
+            "query": "근로기준법 2026년 10월 8일 시행 개정 뭐 바뀜",
+            "task": "amendment_track"
+          },
+          "called_at_utc": "2026-10-11T22:05:20Z",
+          "is_error": false,
+          "excerpt": "═══ 개정 추적: 근로기준법 ═══\n\n▶ 신구대조표 (최근 개정)\n법령명: 근로기준법\n개정구분: 일부개정\n구법 공포일: 20260317\n신법 공포일: 20260407\n\n---\n신구법 대조\n---\n\n\n---\n제13조\n---\n\n[개정 전]\n제13조(보고, 출석의 의무) 사용자 또는 근로자는 이 법의 시행에 관하여 고용노동부장관ㆍ「노동위원회법」에 따른 노동위원회(이하 “노동위원회”라 한다) 또는 <P>근로감독관의 요구가 있으면 지체 없이 필요한 사항에 대하여 보고하거나 출석하여야 한다</P>.\n\n[개정 후]\n제13조(보고, 출석의 의무) 사용자 또는 근로자는 이 법의 시행에 관하여 고용노동부장관ㆍ「노동위원회법」에 따른 노동위원회(이하 “노동위원회”라 한다) 또는 <P>「노동감독관 직무집행법」에 따른 노동감독관의 요구가 있으면 지체 없이 필요한 사항에 대하여 보고하거나 출석하여야 한다</P>.\n\n\n---\n제44조의4\n---\n\n[개정 전]\n<P><신  설></P>\n\n[개정 후]\n<P>제44조의4(도급 사업에서 임금비용의 구분지급) ① 다음 각 호의 어느 하나에 해당하는 도급인은 대통령령으로 정하는 업종, 금액 규모 및 기간에 해당하는 사업을 도급하는 경우 그 도급금액 중 수급인이 자신의 근로자에게 지급하여야 할 임금에 해당하는 비용(이하 “임금비용”이라 한다)을 구분하여 매월 지급하여야 한다.\n  1. 국가\n  2. 지방자치단체\n  3. 「공공기관의 운영에 관한 법률」 제5조에 따른 공공기관\n  4. 「지방공기업법」 제49조에 따른 지방공사 및 같은 법 제76조에 따른 지방공단\n  5. 「지방자치단체 출자ㆍ출연 기관의 운영에 관한 법률」 제2조에 따른 출자기관 또는 출연기관\n  6. 그 밖에 제1호부터 제5호까지에 해당하지 않는 도급인\n  ② 제1항에 따른 사업이 한 차례 이상의 도급에 따라 행하여지는 경우 직상 수급인과 하수급인을 각각 도급인과 수급인으로 본다.\n  ③ 제1항에 따라 임금비용을 구분하여 지급하여야 하는 도급인이 고용노동부장관이 지정하는 금융기관에 임금비용을 예치하는 때에는 해당 임금비용을 수급인에게 지급한 것으로 본다.\n  ④ 도급인이 제1항에 따라 임금비용을 구분하여 지급하는 때에는 수급인이 전월(前月)[임금비용을 최초로 지급한 월(月)의 전월은 제외한다]에 자신의 근로자에게 임금을 지급하였는지를 확인하여야 한다. 이 경우 수급인은 도급인에게 전월 임금 지급내역 등 고용노동부령으로 정하는 자료를 도급인이 정하는 방법에 따라 제출하여야 한다.\n  ⑤ 도급인이 제4항에 따라 임금 지급 여부를 확인한 결과 수급인이 자신의 근로자에게 임금을 지급하지 아니한 경우에는 그 사실을 고용노동부장관에게 통보하여야 한다.\n  ⑥ 수급인은 제1항에 따라 지급받은 임금비용을 자신의 근로자에 대한 임금 지급 이외의 다른 용도로 사용하여서는 아니 된다.\n  ⑦ 제1항부터 제6항까지에 따른 임금비용의 구분지급, 임금 지급 여부의 확인, 고용노동부장관에 대한 통보 방법 및 절차 등에 필요한 사항은 고용노동부령으로 정한다.</P>\n\n\n---\n제101조\n-",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "2f81574e082a20d65a9441e2d0de5c6e8d616a31aceac6e28758dd5a76d7fc65"
+        },
+        {
+          "call_tag": "l_g_107_cur",
+          "server": "law",
+          "tool": "get_law_text",
+          "args": {
+            "mst": "285279",
+            "jo": "제107조"
+          },
+          "called_at_utc": "2026-10-11T22:05:46Z",
+          "is_error": false,
+          "excerpt": "법령명: 근로기준법\n공포일: 20260407\n시행일: 20261008\nℹ️ 조회기준일 20261012 — 위 시행일 버전 본문. 연혁 MST로 조회한 경우 과거 버전일 수 있으니, 개정 여부가 의심되면 search_law로 [현행] MST를 재확인할 것.\n\n제107조 벌칙\n제107조(벌칙)\n① 제7조, 제8조, 제9조, 제23조제2항, 제36조, 제40조, 제43조, 제44조, 제44조의2, 제46조, 제51조의3, 제52조제2항제2호 또는 제56조를 위반한 자는 5년 이하의 징역 또는 5천만원 이하의 벌금에 처한다. <개정 2017.11.28, 2026.4.7>\n② 제36조, 제43조, 제44조, 제44조의2, 제46조, 제51조의3, 제52조제2항제2호 또는 제56조를 위반한 자에 대하여는 피해자의 명시적인 의사와 다르게 공소를 제기할 수 없다. 다만, 제43조의2에 따라 명단 공개된 체불사업주가 명단 공개 기간 중에 제36조, 제43조, 제44조, 제44조의2, 제46조, 제51조의3, 제52조제2항제2호 또는 제56조를 위반한 경우에는 그러하지 아니하다. <신설 2026.4.7>\n\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "9e48705cbe2222c900a8732a536f73b006296606546c2828982815561563631a"
+        },
+        {
+          "call_tag": "l_g_109_cur",
+          "server": "law",
+          "tool": "get_law_text",
+          "args": {
+            "mst": "285279",
+            "jo": "제109조"
+          },
+          "called_at_utc": "2026-10-11T22:05:46Z",
+          "is_error": false,
+          "excerpt": "법령명: 근로기준법\n공포일: 20260407\n시행일: 20261008\nℹ️ 조회기준일 20261012 — 위 시행일 버전 본문. 연혁 MST로 조회한 경우 과거 버전일 수 있으니, 개정 여부가 의심되면 search_law로 [현행] MST를 재확인할 것.\n\n제109조 벌칙\n제109조(벌칙)\n① 제65조, 제72조 또는 제76조의3제6항을 위반한 자는 3년 이하의 징역 또는 3천만원 이하의 벌금에 처한다. <개정 2007.7.27, 2017.11.28, 2019.1.15, 2021.1.5, 2026.4.7>\n② 삭제 <2026.4.7>\n\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "50c1f286634a47c7075d33acfa9261d06c409af48e7697c30b109f98a9290eb5"
+        },
+        {
+          "call_tag": "l_g_101_cur",
+          "server": "law",
+          "tool": "get_law_text",
+          "args": {
+            "mst": "285279",
+            "jo": "제101조"
+          },
+          "called_at_utc": "2026-10-11T22:05:45Z",
+          "is_error": false,
+          "excerpt": "법령명: 근로기준법\n공포일: 20260407\n시행일: 20261008\nℹ️ 조회기준일 20261012 — 위 시행일 버전 본문. 연혁 MST로 조회한 경우 과거 버전일 수 있으니, 개정 여부가 의심되면 search_law로 [현행] MST를 재확인할 것.\n\n제101조 감독 기관\n노동감독관의 권한ㆍ의무 등에 관하여는 「노동감독관 직무집행법」에서 정하는 바에 따른다.\n\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "f4e97508ed25611a4787acbf0aeffb05627e5237ac2a6a1db6451e099da1672c"
+        },
+        {
+          "call_tag": "l_g_44_4_cur",
+          "server": "law",
+          "tool": "get_law_text",
+          "args": {
+            "mst": "285279",
+            "jo": "제44조의4"
+          },
+          "called_at_utc": "2026-10-11T22:05:42Z",
+          "is_error": false,
+          "excerpt": "법령명: 근로기준법\n공포일: 20260407\n시행일: 20261008\nℹ️ 조회기준일 20261012 — 위 시행일 버전 본문. 연혁 MST로 조회한 경우 과거 버전일 수 있으니, 개정 여부가 의심되면 search_law로 [현행] MST를 재확인할 것.\n\n제44조의4 도급 사업에서 임금비용의 구분지급\n제44조의4(도급 사업에서 임금비용의 구분지급)\n① 다음 각 호의 어느 하나에 해당하는 도급인은 대통령령으로 정하는 업종, 금액 규모 및 기간에 해당하는 사업을 도급하는 경우 그 도급금액 중 수급인이 자신의 근로자에게 지급하여야 할 임금에 해당하는 비용(이하 \"임금비용\"이라 한다)을 구분하여 매월 지급하여야 한다.\n1. 국가\n2. 지방자치단체\n3. 「공공기관의 운영에 관한 법률」 제5조에 따른 공공기관\n4. 「지방공기업법」 제49조에 따른 지방공사 및 같은 법 제76조에 따른 지방공단\n5. 「지방자치단체 출자ㆍ출연 기관의 운영에 관한 법률」 제2조에 따른 출자기관 또는 출연기관\n6. 그 밖에 제1호부터 제5호까지에 해당하지 않는 도급인\n② 제1항에 따른 사업이 한 차례 이상의 도급에 따라 행하여지는 경우 직상 수급인과 하수급인을 각각 도급인과 수급인으로 본다.\n③ 제1항에 따라 임금비용을 구분하여 지급하여야 하는 도급인이 고용노동부장관이 지정하는 금융기관에 임금비용을 예치하는 때에는 해당 임금비용을 수급인에게 지급한 것으로 본다.\n④ 도급인이 제1항에 따라 임금비용을 구분하여 지급하는 때에는 수급인이 전월(前月)[임금비용을 최초로 지급한 월(月)의 전월은 제외한다]에 자신의 근로자에게 임금을 지급하였는지를 확인하여야 한다. 이 경우 수급인은 도급인에게 전월 임금 지급내역 등 고용노동부령으로 정하는 자료를 도급인이 정하는 방법에 따라 제출하여야 한다.\n⑤ 도급인이 제4항에 따라 임금 지급 여부를 확인한 결과 수급인이 자신의 근로자에게 임금을 지급하지 아니한 경우에는 그 사실을 고용노동부장관에게 통보하여야 한다.\n⑥ 수급인은 제1항에 따라 지급받은 임금비용을 자신의 근로자에 대한 임금 지급 이외의 다른 용도로 사용하여서는 아니 된다.\n⑦ 제1항부터 제6항까지에 따른 임금비용의 구분지급, 임금 지급 여부의 확인, 고용노동부장관에 대한 통보 방법 및 절차 등에 필요한 사항은 고용노동부령으로 정한다.\n\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "da4d8238d592fa9e054ab1eeb0999b4d7bb8951cf4c0a80037cab8881b768cc3"
+        },
+        {
+          "call_tag": "l_g_44_4_1208",
+          "server": "law",
+          "tool": "get_law_text",
+          "args": {
+            "mst": "285279",
+            "jo": "제44조의4",
+            "efYd": "20261208"
+          },
+          "called_at_utc": "2026-10-11T22:05:47Z",
+          "is_error": true,
+          "excerpt": "법령명: 근로기준법\n공포일: 20260407\n시행일: 20261208\n⚠️ 특정 시행일자(efYd=20261208) 버전 조회 — 현행 법령이 아닐 수 있음. 현행 기준 답변에는 efYd 없이 재조회할 것.\n\n[NOT_FOUND] 조문 내용을 찾을 수 없습니다.\n⚠️ LLM은 조문을 추측/생성하지 말고 아래 안내대로 재조회하세요.\n\n[NOT_FOUND] 조문을 찾을 수 없습니다. 다음을 시도해보세요:\n   - 전체 법령 조회 (jo 파라미터 생략)\n   - 키워드 검색 (search_all 도구 사용)",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "14287e4602fcebcbb773e164c5197340fd5bdae83913266770ff38cff2df8a03"
+        },
+        {
+          "call_tag": "l_g_101_1208",
+          "server": "law",
+          "tool": "get_law_text",
+          "args": {
+            "mst": "285279",
+            "jo": "제101조",
+            "efYd": "20261208"
+          },
+          "called_at_utc": "2026-10-11T22:05:48Z",
+          "is_error": false,
+          "excerpt": "법령명: 근로기준법\n공포일: 20260407\n시행일: 20261208\n⚠️ 특정 시행일자(efYd=20261208) 버전 조회 — 현행 법령이 아닐 수 있음. 현행 기준 답변에는 efYd 없이 재조회할 것.\n\n제101조 감독 기관\n노동감독관의 권한ㆍ의무 등에 관하여는 「노동감독관 직무집행법」에서 정하는 바에 따른다.\n\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "7e1cbc64cbca80bf71ad5af02c363089412c4d0075197ddb121e87a90a780e0c"
+        },
+        {
+          "call_tag": "l_g_apply",
+          "server": "law",
+          "tool": "legal_analysis",
+          "args": {
+            "mode": "applicable_law",
+            "lawName": "근로기준법",
+            "date": "2026-10-12",
+            "jo": "제109조"
+          },
+          "called_at_utc": "2026-10-11T22:05:49Z",
+          "is_error": false,
+          "excerpt": "═══ 행위시법 판단: 근로기준법 @ 2026.10.12 ═══\n\n▶ 기준일에 시행 중이던 버전\n  근로기준법 [시행 2026.10.08] [제21533호, 2026.04.07, 일부개정] (MST 285279)\n  ↳ 이 버전이 현행입니다 (기준일 이후 개정 없음)\n  ⚠️ 시행 예정 개정 5건 존재 — 최근접: 시행 2026.12.08 (제21533호, 일부개정). 기준일 판단에는 영향 없으나, 현행 인용이나 향후 절차 관련 서면에는 개정 내용 확인 필수: get_law_text(mst=\"285279\")\n\n▶ 기준일 시점 조문: 제109조\n제109조(벌칙)\n① 제65조, 제72조 또는 제76조의3제6항을 위반한 자는 3년 이하의 징역 또는 3천만원 이하의 벌금에 처한다. <개정 2007.7.27, 2017.11.28, 2019.1.15, 2021.1.5, 2026.4.7>\n② 삭제 <2026.4.7>\n\n▶ 적용례·경과조치 발췌 (기준일 사건에 영향 가능 — 반드시 확인)\n  ◆ 부칙 <제21533호, 2026.04.07>\n    제2조(임금비용의 구분지급 등에 관한 적용례) 제44조의4의 개정규정은 같은 개정규정 시행 이후 도급계약을 체결하는 경우부터 적용한다.\n\n⚖️ 적용 법령 판단 시 주의\n  - 형사처벌: 행위시법 원칙 (형법 제1조제1항). 단, 재판 시 법이 더 가벼우면 신법 적용 (같은 조 제2항)\n  - 제재처분(과징금·영업정지 등): 위반행위 시 법령 적용 (행정기본법 제14조제3항 본문). 단, 제재 기준이 가벼워졌으면 변경된 법령 (같은 항 단서)\n  - 인허가 등 일반 처분: 원칙적으로 처분 시 법령 (행정기본법 제14조제2항)\n  - 위 원칙은 부칙 경과규정이 우선합니다 — 위 발췌를 반드시 확인하세요. 이 도구는 발췌만 제공하며 해석하지 않습니다.",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "568a7ec15ada7b21fb4e825b6c063871c0b14759eb9e674542ad45f00123cf2b"
+        },
+        {
+          "call_tag": "l_g_hist_law",
+          "server": "law",
+          "tool": "execute_tool",
+          "args": {
+            "tool_name": "search_historical_law",
+            "params": {
+              "lawName": "근로기준법"
+            }
+          },
+          "called_at_utc": "2026-10-11T22:06:31Z",
+          "is_error": false,
+          "excerpt": "근로기준법 연혁 (법령ID 001872, 조회된 66개 버전):\n본문: execute_tool(tool_name=\"get_historical_law\", params={mst, efYd}) — 아래 MST와 시행일을 함께 넘긴다 (같은 MST가 시행일별로 나뉜 분리시행이 있다)\n\n시행: 2027.06.10 | 일부개정 [시행예정]\n   공포: 2026.06.09 (제21784호)\n   MST: 286771\n\n시행: 2027.01.01 | 일부개정 [시행예정]\n   공포: 2026.04.07 (제21533호)\n   MST: 285279\n\n시행: 2027.01.01 | 타법개정 [시행예정]\n   공포: 2026.03.17 (제21472호)\n   MST: 284443\n\n시행: 2026.12.10 | 일부개정 [시행예정]\n   공포: 2026.06.09 (제21784호)\n   MST: 286771\n\n시행: 2026.12.08 | 일부개정 [시행예정]\n   공포: 2026.04.07 (제21533호)\n   MST: 285279\n\n시행: 2026.10.08 | 일부개정 [현행]\n   공포: 2026.04.07 (제21533호)\n   MST: 285279\n\n시행: 2026.10.02 | 타법개정\n   공포: 2026.08.04 (제21857호)\n   MST: 290781\n\n시행: 2026.08.20 | 타법개정\n   공포: 2026.02.19 (제21373호)\n   MST: 283457\n\n시행: 2025.10.23 | 일부개정\n   공포: 2024.10.22 (제20520호)\n   MST: 265959\n\n시행: 2025.10.01 | 타법개정\n   공포: 2025.10.01 (제21065호)\n   MST: 276849\n\n시행: 2025.02.23 | 일부개정\n   공포: 2024.10.22 (제20520호)\n   MST: 265959\n\n시행: 2024.10.22 | 일부개정\n   공포: 2024.10.22 (제20520호)\n   MST: 265959\n\n시행: 2021.11.19 | 일부개정\n   공포: 2021.05.18 (제18176호)\n   MST: 232199\n\n시행: 2021.10.14 | 일부개정\n   공포: 2021.04.13 (제18037호)\n   MST: 231471\n\n시행: 2021.07.01 | 일부개정\n   공포: 2018.03.20 (제15513호)\n   MST: 202870\n\n시행: 2021.04.06 | 일부개정\n   공포: 2021.01.05 (제17862호)\n   MST: 228171\n\n시행: 2021.01.05 | 일부개정\n   공포: 2021.01.05 (제17862호)\n   MST: 228171\n\n시행: 2020.05.26 | 타법개정\n   공포: 2020.05.26 (제17326호)\n   MST: 218277\n\n시행: 2020.03.31 | 일부개정\n   공포: 2020.03.31 (제17185호)\n   MST: 216361\n\n시행: 2020.01.16 | 타법개정\n   공포: 2019.01.15 (제16272호)\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "6f3dbbbc45bcf226bb4f1de6209f965ccff00ca1375924670d81323f0c555c00"
+        },
+        {
+          "call_tag": "l_g_art_hist_44_4",
+          "server": "law",
+          "tool": "execute_tool",
+          "args": {
+            "tool_name": "get_article_history",
+            "params": {
+              "lawId": "001872",
+              "jo": "제44조의4"
+            }
+          },
+          "called_at_utc": "2026-10-11T22:06:34Z",
+          "is_error": false,
+          "excerpt": "조문 개정 이력: 제44조의4 — 법령 버전 44개 중 이 조문이 바뀐 버전 1건\n\n1. 근로기준법 제44조의4\n   - 법령ID: 001872, MST: 284443\n   - 개정구분: 타법개정\n   - 변경사유: 본조신설\n   - 공포일: 20260317, 조문개정일: 20260317\n   - 시행일: 20270101, 조문시행일: 20270101\n\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "9cade35ba49fa6ab3a6b6938a3008775729251fb7282448bf0445706639add22"
+        },
+        {
+          "call_tag": "l_g_art_hist_107",
+          "server": "law",
+          "tool": "execute_tool",
+          "args": {
+            "tool_name": "get_article_history",
+            "params": {
+              "lawId": "001872",
+              "jo": "제107조"
+            }
+          },
+          "called_at_utc": "2026-10-11T22:06:36Z",
+          "is_error": false,
+          "excerpt": "조문 개정 이력: 제107조 — 법령 버전 44개 중 이 조문이 바뀐 버전 5건\n⚠️ 전부개정(시행 20070411)은 조문 체계를 새로 짠다 — 그 전후의 같은 조번호는 다른 조문일 수 있습니다.\n\n1. 근로기준법 제107조\n   - 법령ID: 001872, MST: 53681\n   - 개정구분: 제정\n   - 변경사유: 제정\n   - 공포일: 19970313, 조문개정일: 19970313\n   - 시행일: 19970313, 조문시행일: 19970313\n\n2. 근로기준법 제107조\n   - 법령ID: 001872, MST: 78019\n   - 개정구분: 전부개정\n   - 변경사유: 전부개정\n   - 공포일: 20070411, 조문개정일: 20070411\n   - 시행일: 20070411, 조문시행일: 20070411\n\n3. 근로기준법 제107조\n   - 법령ID: 001872, MST: 79059\n   - 개정구분: 타법개정\n   - 변경사유: 조문변경\n   - 공포일: 20070517, 조문개정일: 20070517\n   - 시행일: 20080101, 조문시행일: 20080101\n\n4. 근로기준법 제107조\n   - 법령ID: 001872, MST: 199151\n   - 개정구분: 일부개정\n   - 변경사유: 조문변경\n   - 공포일: 20171128, 조문개정일: 20171128\n   - 시행일: 20180529, 조문시행일: 20180529\n\n5. 근로기준법 제107조\n   - 법령ID: 001872, MST: 285279\n   - 개정구분: 일부개정\n   - 변경사유: 조문변경\n   - 공포일: 20260407, 조문개정일: 20260407\n   - 시행일: 20261008, 조문시행일: 20261008\n\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "ab993f92a823847ebc9474c19eb36c92e861447b6442e861674b5cc47759d0e8"
+        }
+      ],
+      "official_sources": [
+        {
+          "source": "law.go.kr DRF lawService.do (official 국가법령정보센터 Open API, OC key redacted)",
+          "file": "geunro_285279.json",
+          "sha256": "9cfc25c23095214b6e66a8cf8d425e459ee6d57fd77ec9a9490c44330cdf05e7",
+          "bytes": 256911,
+          "note": "근로기준법 MST 285279 DRF 전문(부칙 포함)",
+          "buchik_excerpt": "부칙 <제21533호,2026.4.7>\n제1조(시행일) 이 법은 공포 후 6개월이 경과한 날부터 시행한다. 다만, 제13조, 제11장의 제목, 제101조, 제102조, 제102조의2, 제103조부터 제105조까지, 제108조, 제110조제1호, 제114조제1호 및 제116조제2항제1호ㆍ제4호의 개정규정은 공포 후 8개월이 경과한 날부터 시행하고, 제44조의4, 제116조제1항제2호 및 제116조제2항제2호의 개정규정은 2027년 1월 1일부터 시행한다.\n제2조(임금비용의 구분지급 등에 관한 적용례) 제44조의4의 개정규정은 같은 개정규정 시행 이후 도급계약을 체결하는 경우부터 적용한다."
+        }
+      ]
+    },
+    "F08": {
+      "item_id": "F08",
+      "domain": "korean_law",
+      "type": "한국 법령 신법 적용례 사례 판단 (과징금 가중·유출 통지)",
+      "question": "법률 자문이 아닌 평가용 문항이다. 2026-10-12 기준. 개인정보처리자 A사는 2025-11-20 개인정보 유출(개인정보 보호법 제64조의2제1항제9호)로 과징금 부과처분을 받았다. A사는 2026-10-01 중대한 과실로 같은 호에 해당하는 유출 사고를 다시 냈다(피해 정보주체 50만 명, 시정조치 명령 불이행과는 무관). (1) 이번 사고에 개정 제64조의2제2항의 \"전체 매출액의 100분의 10\" 상한이 적용될 수 있는가? 조문과 부칙을 근거로 답하라. (2) A사가 2026-09-05 발생한 다른 유출을 2026-09-15에 알게 됐다면, 개정 제34조제1항(통지 항목 확대)이 그 건에 적용되는가?",
+      "gold": "(1) 적용되지 않으며 제1항의 상한(전체 매출액 3/100)이 적용된다. 제64조의2제2항의 10/100 사유는 세 가지다. 1호는 과징금 처분일부터 3년 안에 같은 호를 다시 위반한 경우(각각 고의·중과실), 2호는 고의·중과실이면서 피해 1천만 명 이상, 3호는 시정조치 명령 불이행으로 제9호를 위반한 경우다. 부칙(제21445호) 제3조제1항에 따라 1호는 이 법 시행(2026-09-11) 이후 발생한 위반행위로 과징금 처분을 받은 뒤 다시 위반한 경우부터 적용되므로, 시행 전 위반에 대한 2025-11 처분은 반복 요건에 들어가지 않는다. 2호는 50만 명으로 미달이고 3호는 해당하지 않는다. (2) 적용된다. 부칙 제2조제1항에 따라 제34조제1항·제4항 개정규정은 시행 이후 유출을 \"알게 된\" 경우부터 적용된다. 발생일(2026-09-05)이 시행 전이어도 인지일(2026-09-15)이 시행 후이므로 적용 대상이다.",
+      "rubric": "정확: (1) 10% 불가 + 부칙 제3조①에 근거한 반복 요건 배제 + 2호 1천만 명 미달, (2) 인지일 기준 적용. (1)에서 \"3년 내 재위반이므로 10% 가능\"은 오답(핵심 변별점). (2)에서 발생일 기준으로 부적용이라 하면 오답. 시행일을 2026-09-11로 특정하지 못하면 부분정확. 법률 자문 아님.",
+      "as_of": "2026-10-12 (현행 MST 283839, 시행 2026-09-11)",
+      "tool_calls": [
+        {
+          "call_tag": "l_s_pipa",
+          "server": "law",
+          "tool": "search_law",
+          "args": {
+            "query": "개인정보 보호법",
+            "display": 5
+          },
+          "called_at_utc": "2026-10-11T22:04:59Z",
+          "is_error": false,
+          "excerpt": "검색 결과 (총 2건):\n\n📍 정확매칭 (1건):\n1. 개인정보 보호법 [현행]\n   - 법령ID: 011357\n   - MST: 283839\n   - 공포일: 20260310 / 시행일: 20260911\n   - 구분: 법률\n\n📂 부분매칭 (1건 중 1건 표시):\n2. 개인정보 보호법 시행령 [현행]\n   - 법령ID: 011468\n   - MST: 289537\n   - 공포일: 20260910 / 시행일: 20260911\n   - 구분: 대통령령\n\n🔜 「개인정보 보호법」 개정 시행예정 (일부개정, 2026-09-08 공포 제21910호, 시행 2027-03-09) — 시행예정본 조문: get_law_text(mst=\"289415\", efYd=\"20270309\")\n🔜 「개인정보 보호법」 개정 시행예정 (일부개정, 2026-03-10 공포 제21445호, 시행 2027-07-01) — 시행예정본 조문: get_law_text(mst=\"283839\", efYd=\"20270701\")\n💡 다음: get_law_text(mst=\"283839\") 로 「개인정보 보호법」 조문 전문. 특정 조문만은 jo=\"제N조\" 추가.\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "c7ba24556b6dd6988c898b74cc534bc8b15882e1b6aa4856a00f9f80406b524b"
+        },
+        {
+          "call_tag": "l_am_pipa",
+          "server": "law",
+          "tool": "legal_research",
+          "args": {
+            "query": "개인정보 보호법 2026년 9월 11일 시행 개정 뭐 바뀜",
+            "task": "amendment_track"
+          },
+          "called_at_utc": "2026-10-11T22:05:24Z",
+          "is_error": false,
+          "excerpt": "═══ 개정 추적: 개인정보 보호법 ═══\n\n▶ 신구대조표 (최근 개정)\n법령명: 개인정보 보호법\n개정구분: 일부개정\n구법 공포일: 20250401\n신법 공포일: 20260310\n\n---\n신구법 대조\n---\n\n\n---\n제23조\n---\n\n[개정 전]\n제23조(민감정보의 처리 제한) ① (생  략)\n\n[개정 후]\n제23조(민감정보의 처리 제한) ① (현행과 같음)\n\n\n---\n제29조\n---\n\n[개정 전]\n② 개인정보처리자가 제1항 각 호에 따라 민감정보를 처리하는 경우에는 그 민감정보가 분실ㆍ도난ㆍ유출ㆍ위조ㆍ변조 또는 <P>훼손되지</P> 아니하도록 제29조에 따른 안전성 확보에 필요한 조치를 하여야 한다.\n\n[개정 후]\n② 개인정보처리자가 제1항 각 호에 따라 민감정보를 처리하는 경우에는 그 민감정보가 분실ㆍ도난ㆍ유출ㆍ위조ㆍ변조 또는 <P>훼손(이하 “유출등”이라 한다)이 되지</P> 아니하도록 제29조에 따른 안전성 확보에 필요한 조치를 하여야 한다.\n\n\n---\n조문 3\n---\n\n[개정 전]\n③ (생  략)\n\n[개정 후]\n③ (현행과 같음)\n\n\n---\n제24조\n---\n\n[개정 전]\n제24조(고유식별정보의 처리 제한) ①·② (생  략)\n\n[개정 후]\n제24조(고유식별정보의 처리 제한) ①·② (현행과 같음)\n\n\n---\n조문 5\n---\n\n[개정 전]\n③ 개인정보처리자가 제1항 각 호에 따라 고유식별정보를 처리하는 경우에는 그 고유식별정보가 <P>분실ㆍ도난ㆍ유출ㆍ위조ㆍ변조 또는 훼손되지</P> 아니하도록 대통령령으로 정하는 바에 따라 암호화 등 안전성 확보에 필요한 조치를 하여야 한다.\n\n[개정 후]\n③ 개인정보처리자가 제1항 각 호에 따라 고유식별정보를 처리하는 경우에는 그 고유식별정보가 <P>유출등이 되지</P> 아니하도록 대통령령으로 정하는 바에 따라 암호화 등 안전성 확보에 필요한 조치를 하여야 한다.\n\n\n---\n조문 6\n---\n\n[개정 전]\n④·⑤ (생  략)\n\n[개정 후]\n④·⑤ (현행과 같음)\n\n\n---\n제24조의2\n---\n\n[개정 전]\n제24조의2(주민등록번호 처리의 제한) ① (생  략)\n\n[개정 후]\n제24조의2(주민등록번호 처리의 제한) ① (현행과 같음)\n\n\n---\n제24조\n---\n\n[개정 전]\n② 개인정보처리자는 제24조제3항에도 불구하고 주민등록번호가 <P>분실ㆍ도난ㆍ유출ㆍ위조ㆍ변조 또는 훼손되지</P> 아니하도록 암호화 조치를 통하여 안전하게 보관하여야 한다. 이 경우 암호화 적용 대상 및 대상별 적용 시기 등에 관하여 필요한 사항은 개인정보의 처리 규모와 유출 시 영향 등을 고려하여 대통령령으로 정한다.\n\n[개정 후]\n② 개인정보처리자는 제24조제3항에도 불구하고 주민등록번호가 <P>유출등이 되지</P> 아니하도록 암호화 조치를 통하여 안전하게 보관하여야 한다. 이 경우 암호화 적용 대상 및 대상별 적용 시기 등에 관하여 필요한 사항은 개인정보의 처리 규모와 유출 시 영향 등을 고려하여 대통령령으로 정한다.\n\n\n---\n조문 9\n---\n\n[개정 전]\n③·④ (생  략)\n\n[개정 후]\n③·④ (현행과 같음)\n\n\n--",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "74e6f331ded7b6c504d073b00572e6bc2bfe423cf7e5211f30e19d8a7727c9ba"
+        },
+        {
+          "call_tag": "l_p_64_2_cur",
+          "server": "law",
+          "tool": "get_law_text",
+          "args": {
+            "mst": "283839",
+            "jo": "제64조의2"
+          },
+          "called_at_utc": "2026-10-11T22:07:44Z",
+          "is_error": false,
+          "excerpt": "법령명: 개인정보 보호법\n공포일: 20260310\n시행일: 20260911\nℹ️ 조회기준일 20261012 — 위 시행일 버전 본문. 연혁 MST로 조회한 경우 과거 버전일 수 있으니, 개정 여부가 의심되면 search_law로 [현행] MST를 재확인할 것.\n\n제64조의2 과징금의 부과\n제64조의2(과징금의 부과)\n① 보호위원회는 다음 각 호의 어느 하나에 해당하는 경우에는 해당 개인정보처리자에게 전체 매출액의 100분의 3을 초과하지 아니하는 범위에서 과징금을 부과할 수 있다. 다만, 매출액이 없거나 매출액의 산정이 곤란한 경우로서 대통령령으로 정하는 경우에는 20억원을 초과하지 아니하는 범위에서 과징금을 부과할 수 있다. <개정 2026.3.10>\n1. 제15조제1항, 제17조제1항, 제18조제1항ㆍ제2항(제26조제8항에 따라 준용되는 경우를 포함한다) 또는 제19조를 위반하여 개인정보를 처리한 경우\n2. 제22조의2제1항(제26조제8항에 따라 준용되는 경우를 포함한다)을 위반하여 법정대리인의 동의를 받지 아니하고 만 14세 미만인 아동의 개인정보를 처리한 경우\n3. 제23조제1항제1호(제26조제8항에 따라 준용되는 경우를 포함한다)를 위반하여 정보주체의 동의를 받지 아니하고 민감정보를 처리한 경우\n4. 제24조제1항ㆍ제24조의2제1항(제26조제8항에 따라 준용되는 경우를 포함한다)을 위반하여 고유식별정보 또는 주민등록번호를 처리한 경우\n5. 제26조제4항에 따른 관리ㆍ감독 또는 교육을 소홀히 하여 수탁자가 이 법의 규정을 위반한 경우\n6. 제28조의5제1항(제26조제8항에 따라 준용되는 경우를 포함한다)을 위반하여 특정 개인을 알아보기 위한 목적으로 정보를 처리한 경우\n7. 제28조의8제1항(제26조제8항 및 제28조의11에 따라 준용되는 경우를 포함한다)을 위반하여 개인정보를 국외로 이전한 경우\n8. 제28조의9제1항(제26조제8항 및 제28조의11에 따라 준용되는 경우를 포함한다)을 위반하여 국외 이전 중지 명령을 따르지 아니한 경우\n9. 개인정보처리자가 처리하는 개인정보가 유출등이 된 경우. 다만, 개인정보가 유출등이 되지 아니하도록 개인정보처리자가 제29조(제26조제8항에 따라 준용되는 경우를 포함한다)에 따른 안전성 확보에 필요한 조치를 다한 경우에는 그러하지 아니하다.\n② 제1항에도 불구하고 보호위원회는 다음 각 호의 어느 하나에 해당하는 경우에는 해당 개인정보처리자에게 전체 매출액의 100분의 10을 초과하지 아니하는 범위에서 과징금을 부과할 수 있다. 다만, 매출액이 없거나 매출액의 산정이 곤란한 경우로서 대통령령으로 정하는 경우에는 50억원을 초과하지 아니하는 범위에서 과징금을 부과할 수 있다. <신설 2026.3.10>\n1. 이 조에 따른 과징금 부과처분을 받은 날부터 3년이 경과하기 전에 제1항 같은 호에 해당하는 위반행위를 한 경우(각각 고의 또는 중대한 과실이 있는 경우로 한정한다)\n2. 고의 또는 중대한 과실로 제1항 각 호의 어느 하나에 해당하는 위반행위를 하고 정보주체의 피해 규모가 1천만명 이상인 경",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "2eb1bbbca960c5867decaeacf30f6f745fc1f7791be5efd4c3a0c906f5c3e457"
+        },
+        {
+          "call_tag": "l_p_34_cur",
+          "server": "law",
+          "tool": "get_law_text",
+          "args": {
+            "mst": "283839",
+            "jo": "제34조"
+          },
+          "called_at_utc": "2026-10-11T22:07:41Z",
+          "is_error": false,
+          "excerpt": "법령명: 개인정보 보호법\n공포일: 20260310\n시행일: 20260911\nℹ️ 조회기준일 20261012 — 위 시행일 버전 본문. 연혁 MST로 조회한 경우 과거 버전일 수 있으니, 개정 여부가 의심되면 search_law로 [현행] MST를 재확인할 것.\n\n제34조 개인정보 유출등의 통지ㆍ신고\n제34조(개인정보 유출등의 통지ㆍ신고)\n① 개인정보처리자는 개인정보가 유출등이 되었음을 알게 되었을 때에는 지체 없이 해당 정보주체에게 다음 각 호의 사항을 알려야 한다. 다만, 정보주체의 연락처를 알 수 없는 경우 등 정당한 사유가 있는 경우에는 대통령령으로 정하는 바에 따라 통지를 갈음하는 조치를 취할 수 있다. <개정 2023.3.14, 2026.3.10>\n1. 유출등이 된 개인정보의 항목\n2. 유출등이 된 시점과 그 경위\n3. 유출등으로 인하여 발생할 수 있는 피해를 최소화하기 위하여 정보주체가 할 수 있는 방법 등에 관한 구체적인 정보\n4. 개인정보처리자의 대응조치 및 피해 구제절차\n5. 정보주체에게 피해가 발생한 경우 신고 등을 접수할 수 있는 담당부서 및 연락처\n6. 개인정보 유출등으로 인한 제39조에 따른 손해배상과 제39조의2에 따른 법정손해배상의 청구 및 제43조에 따른 분쟁조정 등 피해를 입은 정보주체의 법적 권리와 그 행사 방법 등에 관한 정보\n7. 그 밖에 개인정보가 유출등이 된 정보주체의 보호를 위하여 대통령령으로 정하는 사항\n② 제1항에도 불구하고 개인정보의 유형, 정보주체에게 미치는 영향 및 유출등의 위험 정도를 고려하여 대통령령으로 정하는 유출등의 가능성이 있음을 알게 되었을 때에는 지체 없이 유출등의 가능성이 있는 모든 정보주체에게 피해를 최소화하기 위한 정보 등 대통령령으로 정하는 사항을 알려야 한다. <신설 2026.3.10>\n③ 개인정보처리자는 개인정보가 유출등이 된 경우에는 해당 개인정보의 회수ㆍ삭제 등 피해 확산을 방지하기 위한 조치를 포함하여 피해를 최소화하기 위한 대책을 마련하고 필요한 조치를 하여야 한다. <개정 2023.3.14, 2026.3.10>\n④ 개인정보처리자는 개인정보의 유출등이 있음을 알게 되었을 때에는 개인정보의 유형, 유출등의 경로 및 규모 등을 고려하여 대통령령으로 정하는 바에 따라 제1항 각 호의 사항을 지체 없이 보호위원회 또는 대통령령으로 정하는 전문기관에 신고하여야 한다. 이 경우 보호위원회 또는 대통령령으로 정하는 전문기관은 피해 확산방지, 피해 복구 등을 위한 기술을 지원할 수 있다. <개정 2013.3.23, 2014.11.19, 2017.7.26, 2020.2.4, 2023.3.14, 2026.3.10>\n⑤ 제1항ㆍ제2항에 따른 통지 및 제4항에 따른 유출등의 신고의 시기, 방법, 절차 등에 필요한 사항은 대통령령으로 정한다. <개정 2023.3.14, 2026.3.10>\n\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "230623a3b3169a743fd285824fb7a4225d620c4b4dab629ad92a633647d26c49"
+        },
+        {
+          "call_tag": "l_p_34_old",
+          "server": "law",
+          "tool": "get_law_text",
+          "args": {
+            "lawId": "011357",
+            "jo": "제34조",
+            "efYd": "20260910"
+          },
+          "called_at_utc": "2026-10-11T22:07:42Z",
+          "is_error": false,
+          "excerpt": "ℹ️ efYd=20260910는 이 법령의 시행일이 아니어서, 그날(2026.09.10) 시행 중이던 버전으로 조회했습니다: 시행 2025.10.02, 공포 제20897호 일부개정, MST 270351, 당시 법령명 「개인정보 보호법」\n법령명: 개인정보 보호법\n공포일: 20250401\n시행일: 20251002\n⚠️ 특정 시행일자(efYd=20251002) 버전 조회 — 현행 법령이 아닐 수 있음. 현행 기준 답변에는 efYd 없이 재조회할 것.\n\n제34조 개인정보 유출 등의 통지ㆍ신고\n제34조(개인정보 유출 등의 통지ㆍ신고)\n① 개인정보처리자는 개인정보가 분실ㆍ도난ㆍ유출(이하 이 조에서 \"유출등\"이라 한다)되었음을 알게 되었을 때에는 지체 없이 해당 정보주체에게 다음 각 호의 사항을 알려야 한다. 다만, 정보주체의 연락처를 알 수 없는 경우 등 정당한 사유가 있는 경우에는 대통령령으로 정하는 바에 따라 통지를 갈음하는 조치를 취할 수 있다. <개정 2023.3.14>\n1. 유출등이 된 개인정보의 항목\n2. 유출등이 된 시점과 그 경위\n3. 유출등으로 인하여 발생할 수 있는 피해를 최소화하기 위하여 정보주체가 할 수 있는 방법 등에 관한 정보\n4. 개인정보처리자의 대응조치 및 피해 구제절차\n5. 정보주체에게 피해가 발생한 경우 신고 등을 접수할 수 있는 담당부서 및 연락처\n② 개인정보처리자는 개인정보가 유출등이 된 경우 그 피해를 최소화하기 위한 대책을 마련하고 필요한 조치를 하여야 한다. <개정 2023.3.14>\n③ 개인정보처리자는 개인정보의 유출등이 있음을 알게 되었을 때에는 개인정보의 유형, 유출등의 경로 및 규모 등을 고려하여 대통령령으로 정하는 바에 따라 제1항 각 호의 사항을 지체 없이 보호위원회 또는 대통령령으로 정하는 전문기관에 신고하여야 한다. 이 경우 보호위원회 또는 대통령령으로 정하는 전문기관은 피해 확산방지, 피해 복구 등을 위한 기술을 지원할 수 있다. <개정 2013.3.23, 2014.11.19, 2017.7.26, 2020.2.4, 2023.3.14>\n④ 제1항에 따른 유출등의 통지 및 제3항에 따른 유출등의 신고의 시기, 방법, 절차 등에 필요한 사항은 대통령령으로 정한다. <개정 2023.3.14>\n\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "25a09f5bae8c2c84b017945c2699e854fe89a09c76e4c34d9b95a9f32625d84a"
+        },
+        {
+          "call_tag": "l_p_apply_31",
+          "server": "law",
+          "tool": "legal_analysis",
+          "args": {
+            "mode": "applicable_law",
+            "lawName": "개인정보 보호법",
+            "date": "2026-10-12",
+            "jo": "제31조"
+          },
+          "called_at_utc": "2026-10-11T22:06:44Z",
+          "is_error": false,
+          "excerpt": "═══ 행위시법 판단: 개인정보 보호법 @ 2026.10.12 ═══\n\n▶ 기준일에 시행 중이던 버전\n  개인정보 보호법 [시행 2026.09.11] [제21445호, 2026.03.10, 일부개정] (MST 283839)\n  ↳ 이 버전이 현행입니다 (기준일 이후 개정 없음)\n  ⚠️ 시행 예정 개정 2건 존재 — 최근접: 시행 2027.03.09 (제21910호, 일부개정). 기준일 판단에는 영향 없으나, 현행 인용이나 향후 절차 관련 서면에는 개정 내용 확인 필수: get_law_text(mst=\"289415\")\n\n▶ 기준일 시점 조문: 제31조\n제31조(개인정보 보호책임자의 지정 등)\n① 개인정보처리자는 개인정보의 처리 및 보호에 관한 업무를 총괄해서 담당할 개인정보 보호책임자를 지정하여야 한다. 다만, 종업원 수, 매출액 등이 대통령령으로 정하는 기준에 해당하는 개인정보처리자의 경우에는 지정하지 아니할 수 있다. <개정 2023.3.14, 2026.3.10>\n② 제1항 단서에 따라 개인정보 보호책임자를 지정하지 아니하는 경우에는 개인정보처리자의 사업주 또는 대표자가 개인정보 보호책임자가 된다. <신설 2023.3.14>\n③ 매출액, 개인정보의 보유 규모 등을 고려하여 대통령령으로 정하는 기준에 해당하는 개인정보처리자는 다음 각 호의 사항을 준수하여야 한다. <신설 2026.3.10>\n1. 개인정보 보호책임자를 지정하거나 그 지정을 변경 또는 해제할 때에는 이사회(법인인 경우로 한정한다. 이하 같다)의 의결을 거칠 것\n2. 보호위원회에 대통령령으로 정하는 바에 따라 개인정보 보호책임자 지정ㆍ변경 또는 해제에 관한 사항을 신고할 것\n④ 개인정보 보호책임자는 다음 각 호의 업무를 수행한다. <개정 2023.3.14, 2026.3.10>\n1. 개인정보 보호 계획의 수립 및 시행\n2. 개인정보 보호에 필요한 전문 인력의 관리 및 예산의 확보\n3. 사업주 또는 대표자 및 이사회에 대한 개인정보 보호 현황 및 주요 사항의 보고\n4. 개인정보 처리 및 보호의 실태와 관행에 대한 정기적인 조사 및 개선\n5. 개인정보 처리와 관련한 불만의 처리 및 피해 구제\n6. 개인정보 유출 및 오용ㆍ남용 방지를 위한 내부통제시스템의 구축\n7. 개인정보 보호 교육 계획의 수립 및 시행\n8. 개인정보파일의 보호 및 관리ㆍ감독\n9. 그 밖에 개인정보의 적절한 처리 및 보호를 위하여 대통령령으로 정한 업무\n⑤ 개인정보 보호책임자는 제4항 각 호의 업무를 수행함에 있어서 필요한 경우 개인정보의 처리 현황, 처리 체계 등에 대하여 수시로 조사하거나 관계 당사자로부터 보고를 받을 수 있다. <개정 2023.3.14, 2026.3.10>\n⑥ 개인정보 보호책임자는 개인정보 보호와 관련하여 이 법 및 다른 관계 법령의 위반 사실을 알게 된 경우에는 즉시 개선조치를 하여야 하며, 필요하면 소속 기관 또는 단체의 장에게 개선조치를 보고하여야 한다. <개정 2023.3.14, 2026.3.10>\n⑦ 개인정보처리자는 개인정보 보호책임자가 제4항 각 호의 업무를 수행함에 있어서 정당한",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "8e13802ab42403348b326991f7748a4ba3854043c24109d84a603b2766c484c2"
+        }
+      ],
+      "official_sources": [
+        {
+          "source": "law.go.kr DRF lawService.do (official 국가법령정보센터 Open API, OC key redacted)",
+          "file": "pipa_283839.json",
+          "sha256": "6737276fb3313f415cc68b325ad7b94b2a42d7cbcdd6da0f76f131f04c3eca47",
+          "bytes": 406938,
+          "note": "개인정보 보호법 MST 283839 DRF 전문(부칙 포함)",
+          "buchik_excerpt": "부칙 <제21445호,2026.3.10>\n제1조(시행일) 이 법은 공포 후 6개월이 경과한 날부터 시행한다. 다만, 제32조의2제1항 단서 및 제75조제2항제15호의 개정규정은 2027년 7월 1일부터 시행한다.\n제2조(개인정보 유출등의 통지 등에 관한 적용례) ① 제34조제1항 및 제4항의 개정규정은 이 법 시행 이후 개인정보가 유출등이 되었음을 알게 된 경우부터 적용한다.\n  ② 제34조제2항의 개정규정은 이 법 시행 이후 대통령령으로 정하는 유출등의 가능성이 있음을 알게 된 경우부터 적용한다.\n  ③ 제34조제3항의 개정규정은 이 법 시행 이후 유출등이 된 경우부터 적용한다.\n제3조(과징금 부과에 관한 적용례) ① 제64조의2제2항제1호의 개정규정은 이 법 시행 이후 발생한 같은 조 제1항 각 호의 위반행위로 같은 조에 따른 과징금 부과처분을 받은 후 다시 같은 조 제1항 같은 호에 해당하는 위반행위를 한 경우부터 적용한다.\n  ② 제64조의2제2항제2호의 개정규정은 이 법 시행 당시 종료되지 아니한 위반행위에 대해서도 적용한다.\n  ③ 제64조의2제2항제3호의 개정규정은 이 법 시행 이후 제64조제1항에 따른 시정조치 명령을 받은 경우부터 적용한다.\n제4조(다른 법률의 개정) ① 신용정보의 이용 및 보호에 관한 법률 일부를 다음과 같이 개정한다.\n  제20조제4항제1호가목 중 \"「개인정보 보호법」 제31조제3항제1호부터 제5호까지\"를 \"「개인정보 보호법」 제31조제4항제1호 및 같은 항 제4호부터 제7호까지\"로 하고, 같은 조 제5항 중 \"「개인정보 보호법」 제31조제4항 및 제6항\"을 \"「개인정보 보호법」 제31조제5항 및 제7항\"으로 한다.\n  ② 정보통신망 이용촉진 및 정보보호 등에 관한 법률 일부를 다음과 같이 개정한다.\n  제45조의3제4항제2호라목 중 \"「개인정보 보호법」 제31조제2항\"을 \"「개인정보 보호법」 제31조제4항\"으로 한다."
+        }
+      ]
+    },
+    "F09": {
+      "item_id": "F09",
+      "domain": "korean_law",
+      "type": "한국 법령 경과규정 사례 판단 (소액임차인 기준 시점)",
+      "question": "법률 자문이 아닌 평가용 문항이다. 2026-10-12 기준. 서울특별시 소재 주택에 2022-05-01 은행 근저당권이 설정되었다. 임차인 B는 2024-03-01 보증금 1억6천만원으로 계약하고 같은 날 입주와 전입신고를 마쳤다. 2026-08 경매가 신청되었다(매각대금 4억원 가정). (1) B는 위 근저당권자보다 우선하여 보증금 중 일정액(최우선변제)을 받을 수 있는가? (2) 근저당권이 2024-01-10에 설정되었다면 결론과 우선변제 금액 한도는 어떻게 되는가? 주택임대차보호법 제8조, 시행령 제10조·제11조, 관련 부칙을 근거로 하라.",
+      "gold": "(1) 받을 수 없다. 시행령 2023.2.21 개정(제33254호) 부칙 제2조에 따라 시행 전에 담보물권을 취득한 자에 대해서는 종전 규정(2021.5.11 개정본)이 적용된다. 종전 기준은 서울 보증금 1억5천만원 이하, 일정액 5천만원이다. B의 보증금 1억6천만원은 1억5천만원을 넘으므로 2022년 근저당권자에 대해서는 소액임차인이 아니다. (2) 현행 기준(서울 1억6천5백만원 이하)이 적용되어 소액임차인에 해당한다. 일정액은 5천5백만원이고, 주택가액 1/2(2억원) 한도 안이므로 5,500만원까지 근저당권자보다 우선변제된다. 경매신청 등기 전 대항요건(인도+주민등록)을 갖춰야 하는데(법 제8조제1항 후문), 이 요건은 충족한다.",
+      "rubric": "정확: (1) 불가 + 담보물권 설정일 기준 종전 규정 적용 + 1억5천 기준, (2) 해당 + 5,500만원. 현행 1억6천5백만원 기준만 보고 (1)도 가능하다고 하면 오답(핵심 변별점). 계약일을 기준으로 판단하는 오류도 오답. 법률 자문 아님.",
+      "as_of": "2026-10-12 (시행령 현행 MST 287183 시행 2026-07-01; 법 MST 276291 시행 2026-01-02)",
+      "tool_calls": [
+        {
+          "call_tag": "l_s_jutaek",
+          "server": "law",
+          "tool": "search_law",
+          "args": {
+            "query": "주택임대차보호법 시행령",
+            "display": 5
+          },
+          "called_at_utc": "2026-10-11T22:04:56Z",
+          "is_error": false,
+          "excerpt": "검색 결과 (총 1건):\n\n📍 정확매칭 (1건):\n1. 주택임대차보호법 시행령 [현행]\n   - 법령ID: 004950\n   - MST: 287183\n   - 공포일: 20260623 / 시행일: 20260701\n   - 구분: 대통령령\n\n💡 다음: get_law_text(mst=\"287183\") 로 「주택임대차보호법 시행령」 조문 전문. 특정 조문만은 jo=\"제N조\" 추가.\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "09172df1a240a75396517ff304209a44239a518122fb7ae7b34f553f4d19f75e"
+        },
+        {
+          "call_tag": "l_js_law",
+          "server": "law",
+          "tool": "search_law",
+          "args": {
+            "query": "주택임대차보호법",
+            "display": 3
+          },
+          "called_at_utc": "2026-10-11T22:09:51Z",
+          "is_error": false,
+          "excerpt": "검색 결과 (총 2건):\n\n📍 정확매칭 (1건):\n1. 주택임대차보호법 [현행]\n   - 법령ID: 001248\n   - MST: 276291\n   - 공포일: 20251001 / 시행일: 20260102\n   - 구분: 법률\n\n📂 부분매칭 (1건 중 1건 표시):\n2. 주택임대차보호법 시행령 [현행]\n   - 법령ID: 004950\n   - MST: 287183\n   - 공포일: 20260623 / 시행일: 20260701\n   - 구분: 대통령령\n\n💡 다음: get_law_text(mst=\"276291\") 로 「주택임대차보호법」 조문 전문. 특정 조문만은 jo=\"제N조\" 추가.\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "52f0376f117dfd3c94ea919c40ad02fae2f70d6b448505df92fc6a35dff51f7d"
+        },
+        {
+          "call_tag": "l_js_8",
+          "server": "law",
+          "tool": "get_law_text",
+          "args": {
+            "mst": "276291",
+            "jo": "제8조"
+          },
+          "called_at_utc": "2026-10-11T22:09:52Z",
+          "is_error": false,
+          "excerpt": "법령명: 주택임대차보호법\n공포일: 20251001\n시행일: 20260102\nℹ️ 조회기준일 20261012 — 위 시행일 버전 본문. 연혁 MST로 조회한 경우 과거 버전일 수 있으니, 개정 여부가 의심되면 search_law로 [현행] MST를 재확인할 것.\n\n제8조 보증금 중 일정액의 보호\n제8조(보증금 중 일정액의 보호)\n① 임차인은 보증금 중 일정액을 다른 담보물권자(擔保物權者)보다 우선하여 변제받을 권리가 있다. 이 경우 임차인은 주택에 대한 경매신청의 등기 전에 제3조제1항의 요건을 갖추어야 한다.\n② 제1항의 경우에는 제3조의2제4항부터 제6항까지의 규정을 준용한다.\n③ 제1항에 따라 우선변제를 받을 임차인 및 보증금 중 일정액의 범위와 기준은 제8조의2에 따른 주택임대차위원회의 심의를 거쳐 대통령령으로 정한다. 다만, 보증금 중 일정액의 범위와 기준은 주택가액(대지의 가액을 포함한다)의 2분의 1을 넘지 못한다. <개정 2009.5.8>\n\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "4ef9b1a5941941ea2f56470e2ec156855706cefbf937a5470cf4b5de0c5bad41"
+        },
+        {
+          "call_tag": "l_j_10",
+          "server": "law",
+          "tool": "get_law_text",
+          "args": {
+            "mst": "287183",
+            "jo": "제10조"
+          },
+          "called_at_utc": "2026-10-11T22:08:09Z",
+          "is_error": false,
+          "excerpt": "법령명: 주택임대차보호법 시행령\n공포일: 20260623\n시행일: 20260701\nℹ️ 조회기준일 20261012 — 위 시행일 버전 본문. 연혁 MST로 조회한 경우 과거 버전일 수 있으니, 개정 여부가 의심되면 search_law로 [현행] MST를 재확인할 것.\n\n제10조 보증금 중 일정액의 범위 등\n제10조(보증금 중 일정액의 범위 등)\n① 법 제8조에 따라 우선변제를 받을 보증금 중 일정액의 범위는 다음 각 호의 구분에 의한 금액 이하로 한다. <개정 2010.7.21, 2013.12.30, 2016.3.31, 2018.9.18, 2021.5.11, 2023.2.21>\n1. 서울특별시: 5천500만원\n2. 「수도권정비계획법」에 따른 과밀억제권역(서울특별시는 제외한다), 세종특별자치시, 용인시, 화성시 및 김포시: 4천800만원\n3. 광역시(「수도권정비계획법」에 따른 과밀억제권역에 포함된 지역과 군지역은 제외한다), 안산시, 광주시, 파주시, 이천시 및 평택시: 2천800만원\n4. 그 밖의 지역: 2천500만원\n② 임차인의 보증금 중 일정액이 주택가액의 2분의 1을 초과하는 경우에는 주택가액의 2분의 1에 해당하는 금액까지만 우선변제권이 있다.\n③ 하나의 주택에 임차인이 2명 이상이고, 그 각 보증금 중 일정액을 모두 합한 금액이 주택가액의 2분의 1을 초과하는 경우에는 그 각 보증금 중 일정액을 모두 합한 금액에 대한 각 임차인의 보증금 중 일정액의 비율로 그 주택가액의 2분의 1에 해당하는 금액을 분할한 금액을 각 임차인의 보증금 중 일정액으로 본다.\n④ 하나의 주택에 임차인이 2명 이상이고 이들이 그 주택에서 가정공동생활을 하는 경우에는 이들을 1명의 임차인으로 보아 이들의 각 보증금을 합산한다.\n\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "beb11730dddd984d2d4e76b209f7dd235c35605288ee2752fa4d5a16a9d9b53a"
+        },
+        {
+          "call_tag": "l_j_11",
+          "server": "law",
+          "tool": "get_law_text",
+          "args": {
+            "mst": "287183",
+            "jo": "제11조"
+          },
+          "called_at_utc": "2026-10-11T22:08:11Z",
+          "is_error": false,
+          "excerpt": "법령명: 주택임대차보호법 시행령\n공포일: 20260623\n시행일: 20260701\nℹ️ 조회기준일 20261012 — 위 시행일 버전 본문. 연혁 MST로 조회한 경우 과거 버전일 수 있으니, 개정 여부가 의심되면 search_law로 [현행] MST를 재확인할 것.\n\n제11조 우선변제를 받을 임차인의 범위\n법 제8조에 따라 우선변제를 받을 임차인은 보증금이 다음 각 호의 구분에 의한 금액 이하인 임차인으로 한다. <개정 2010.7.21, 2013.12.30, 2016.3.31, 2018.9.18, 2021.5.11, 2023.2.21>\n\n1. 서울특별시: 1억6천500만원\n2. 「수도권정비계획법」에 따른 과밀억제권역(서울특별시는 제외한다), 세종특별자치시, 용인시, 화성시 및 김포시: 1억4천500만원\n3. 광역시(「수도권정비계획법」에 따른 과밀억제권역에 포함된 지역과 군지역은 제외한다), 안산시, 광주시, 파주시, 이천시 및 평택시: 8천500만원\n4. 그 밖의 지역: 7천500만원\n\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "2d03023a372fba39a6d1aa820fd85cdb16611cf50e985bc66bb0e16ed3575083"
+        },
+        {
+          "call_tag": "l_j_apply_10",
+          "server": "law",
+          "tool": "legal_analysis",
+          "args": {
+            "mode": "applicable_law",
+            "lawName": "주택임대차보호법 시행령",
+            "date": "2022-05-01",
+            "jo": "제10조"
+          },
+          "called_at_utc": "2026-10-11T22:08:40Z",
+          "is_error": false,
+          "excerpt": "═══ 행위시법 판단: 주택임대차보호법 시행령 @ 2022.05.01 ═══\n\n▶ 기준일에 시행 중이던 버전\n  주택임대차보호법 시행령 [시행 2021.05.11] [제31673호, 2021.05.11, 일부개정] (MST 232089)\n  ↳ 기준일 이후 현재까지 8차례 개정·시행됨 (현행: 시행 2026.07.01)\n\n▶ 기준일 시점 조문: 제10조\n제10조(보증금 중 일정액의 범위 등)\n① 법 제8조에 따라 우선변제를 받을 보증금 중 일정액의 범위는 다음 각 호의 구분에 의한 금액 이하로 한다. <개정 2010.7.21, 2013.12.30, 2016.3.31, 2018.9.18, 2021.5.11>\n1. 서울특별시: 5천만원\n2. 「수도권정비계획법」에 따른 과밀억제권역(서울특별시는 제외한다), 세종특별자치시, 용인시, 화성시 및 김포시: 4천300만원\n3. 광역시(「수도권정비계획법」에 따른 과밀억제권역에 포함된 지역과 군지역은 제외한다), 안산시, 광주시, 파주시, 이천시 및 평택시: 2천300만원\n4. 그 밖의 지역: 2천만원\n② 임차인의 보증금 중 일정액이 주택가액의 2분의 1을 초과하는 경우에는 주택가액의 2분의 1에 해당하는 금액까지만 우선변제권이 있다.\n③ 하나의 주택에 임차인이 2명 이상이고, 그 각 보증금 중 일정액을 모두 합한 금액이 주택가액의 2분의 1을 초과하는 경우에는 그 각 보증금 중 일정액을 모두 합한 금액에 대한 각 임차인의 보증금 중 일정액의 비율로 그 주택가액의 2분의 1에 해당하는 금액을 분할한 금액을 각 임차인의 보증금 중 일정액으로 본다.\n④ 하나의 주택에 임차인이 2명 이상이고 이들이 그 주택에서 가정공동생활을 하는 경우에는 이들을 1명의 임차인으로 보아 이들의 각 보증금을 합산한다.\n\n▶ 현행과 비교: △ 변경됨 — 현행 본문과 다릅니다. 인용 시 반드시 기준일 버전을 사용하세요.\n  상세 diff: legal_research(task=\"amendment_track\", query=\"주택임대차보호법 시행령\", scenario=\"time_travel\", fromDate=\"20220501\", toDate=\"20261012\")\n\n▶ 적용례·경과조치 발췌 (기준일 사건에 영향 가능 — 반드시 확인)\n  ◆ 부칙 <제35947호, 2025.12.30>\n    제1조(시행일) 이 영은 2026년 1월 2일부터 시행한다. 다만, 부칙 제6조에 따라 개정되는 대통령령 중 이 영 시행 전에 공포되었으나 시행일이 도래하지 않은 대통령령을 개정한 부분은 각각 해당 대통령령의 시행일부터 시행한다.\n  ◆ 부칙 <제35161호, 2024.12.31>\n    제2조(주택임대차분쟁조정위원회의 분쟁조정 대상에 관한 적용례) 제22조제5호 및 제7호의 개정규정은 이 영 시행 전에 공인중개사의 손해배상책임에 관한 분쟁이 발생한 경우로서 이 영 시행 이후 주택임대차분쟁조정위원회에 분쟁의 조정을 신청하는 경우에도 적용한다.\n  ◆ 부칙 <제33771호, 2023.09.26>\n    제2조(주택임대차분쟁 조정 수수료 면제에 관한 적",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "7a568c21d659c04bfe69dd118d4cc754b769dd39df30cbbdb96ecffcb5d3b86d"
+        },
+        {
+          "call_tag": "l_j_apply_11",
+          "server": "law",
+          "tool": "legal_analysis",
+          "args": {
+            "mode": "applicable_law",
+            "lawName": "주택임대차보호법 시행령",
+            "date": "2022-05-01",
+            "jo": "제11조"
+          },
+          "called_at_utc": "2026-10-11T22:08:44Z",
+          "is_error": false,
+          "excerpt": "═══ 행위시법 판단: 주택임대차보호법 시행령 @ 2022.05.01 ═══\n\n▶ 기준일에 시행 중이던 버전\n  주택임대차보호법 시행령 [시행 2021.05.11] [제31673호, 2021.05.11, 일부개정] (MST 232089)\n  ↳ 기준일 이후 현재까지 8차례 개정·시행됨 (현행: 시행 2026.07.01)\n\n▶ 기준일 시점 조문: 제11조\n법 제8조에 따라 우선변제를 받을 임차인은 보증금이 다음 각 호의 구분에 의한 금액 이하인 임차인으로 한다. <개정 2010.7.21, 2013.12.30, 2016.3.31, 2018.9.18, 2021.5.11>\n\n1. 서울특별시: 1억5천만원\n2. 「수도권정비계획법」에 따른 과밀억제권역(서울특별시는 제외한다), 세종특별자치시, 용인시, 화성시 및 김포시: 1억3천만원\n3. 광역시(「수도권정비계획법」에 따른 과밀억제권역에 포함된 지역과 군지역은 제외한다), 안산시, 광주시, 파주시, 이천시 및 평택시: 7천만원\n4. 그 밖의 지역: 6천만원\n\n▶ 현행과 비교: △ 변경됨 — 현행 본문과 다릅니다. 인용 시 반드시 기준일 버전을 사용하세요.\n  상세 diff: legal_research(task=\"amendment_track\", query=\"주택임대차보호법 시행령\", scenario=\"time_travel\", fromDate=\"20220501\", toDate=\"20261012\")\n\n▶ 적용례·경과조치 발췌 (기준일 사건에 영향 가능 — 반드시 확인)\n  ◆ 부칙 <제35947호, 2025.12.30>\n    제1조(시행일) 이 영은 2026년 1월 2일부터 시행한다. 다만, 부칙 제6조에 따라 개정되는 대통령령 중 이 영 시행 전에 공포되었으나 시행일이 도래하지 않은 대통령령을 개정한 부분은 각각 해당 대통령령의 시행일부터 시행한다.\n  ◆ 부칙 <제35161호, 2024.12.31>\n    제2조(주택임대차분쟁조정위원회의 분쟁조정 대상에 관한 적용례) 제22조제5호 및 제7호의 개정규정은 이 영 시행 전에 공인중개사의 손해배상책임에 관한 분쟁이 발생한 경우로서 이 영 시행 이후 주택임대차분쟁조정위원회에 분쟁의 조정을 신청하는 경우에도 적용한다.\n  ◆ 부칙 <제33771호, 2023.09.26>\n    제2조(주택임대차분쟁 조정 수수료 면제에 관한 적용례) 「주택임대차보호법 시행령」 제33조제2항제10호의 개정규정은 이 영 시행 전에 주택임대차분쟁의 조정을 신청한 경우로서 이 영 시행 당시 조정절차가 진행 중인 경우에도 적용한다.\n  ◆ 부칙 <제33254호, 2023.02.21>\n    제2조(소액보증금 보호에 관한 적용례 등) 제10조제1항 및 제11조의 개정규정은 이 영 시행 당시 존속 중인 임대차계약에 대해서도 적용하되, 이 영 시행 전에 임차주택에 대하여 담보물권을 취득한 자에 대해서는 종전의 규정에 따른다.\n  ◆ 부칙 <제33105호, 2022.12.20>\n    제2조(공사의 인천지역본부 등에 설치된 조정위원회에 조정 신청된 사항에 관한 경과조치) 이 영 시행 당시 종전",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "0172c09beffc145898a40a32671a7f3c7806377b4f26b600f71f31993843f24b"
+        },
+        {
+          "call_tag": "l_am_jutaek",
+          "server": "law",
+          "tool": "legal_research",
+          "args": {
+            "query": "주택임대차보호법 시행령 2026년 7월 1일 시행 개정 뭐 바뀜",
+            "task": "amendment_track"
+          },
+          "called_at_utc": "2026-10-11T22:05:23Z",
+          "is_error": false,
+          "excerpt": "═══ 개정 추적: 주택임대차보호법 시행령 ═══\n\n▶ 신구대조표 (최근 개정) [NOT_FOUND / FAILED]\n   ⚠️ 이 섹션은 조회 실패 — LLM은 내용을 추측/생성하지 마세요.\n   사유: 법령명: 주택임대차보호법 시행령\n개정구분: 타법개정\n구법 공포일: 20251230\n신법 공포일: 20260623\n\n---\n신구법 대조\n---\n\n[NOT_FOUND] 개정 이력이 없거나 신구법 대조 데이터가 없습니다.\n⚠️ LLM은 대조 내용을 추측하지 마세요.\n\n\n[조문별 개정 이력 생략] 제정 시점부터의 조문×개정 전건이라 응답 상한을 소진합니다. 필요하면 includeHistory=true 또는 execute_tool(tool_name=\"get_article_history\", params={lawId:\"004950\", jo:\"제N조\"}).",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "15edd4288006c824b2f11c73573036175d9d925df8fd5f6176ff5c6acbdf4673"
+        }
+      ],
+      "official_sources": [
+        {
+          "source": "law.go.kr DRF lawService.do (official 국가법령정보센터 Open API, OC key redacted)",
+          "file": "jutaek_287183.json",
+          "sha256": "7e1bf1b14588026270edff4c105814ad2cbffba4a3c20a0cffe650c13b49c240",
+          "bytes": 104548,
+          "note": "주택임대차보호법 시행령 MST 287183 DRF 전문(부칙 이력 포함)",
+          "buchik_excerpt": "부칙 <제33254호,2023.2.21>\n제1조(시행일) 이 영은 공포한 날부터 시행한다.\n제2조(소액보증금 보호에 관한 적용례 등) 제10조제1항 및 제11조의 개정규정은 이 영 시행 당시 존속 중인 임대차계약에 대해서도 적용하되, 이 영 시행 전에 임차주택에 대하여 담보물권을 취득한 자에 대해서는 종전의 규정에 따른다."
+        }
+      ]
+    },
+    "F10": {
+      "item_id": "F10",
+      "domain": "korean_law",
+      "type": "판례 변경과 장래효 범위 사례 판단",
+      "question": "법률 자문이 아닌 평가용 문항이다. C사는 매년 12월 1일 재직자에게만 지급하는 정기상여금(연 600만원, 전 직원 일률 지급, 성과와 무관)을 운영한다. 근로자 D는 통상임금 소송을 낸 적이 없다. D가 (a) 2024-11에 한 연장근로와 (b) 2025-03에 한 연장근로의 법정수당을 산정할 때 이 상여금을 통상임금에 넣어야 하는가? 근거가 되는 대법원 판결의 사건번호·선고일·판결 유형과 새 법리의 효력 범위(소급 여부)를 한국 법령 MCP로 확인해 답하라.",
+      "gold": "대법원 2024. 12. 19. 선고 2020다247190 전원합의체 판결은 고정성을 통상임금의 개념적 징표에서 제외했다. 재직조건부 임금도 그 조건만으로는 통상임금성이 부정되지 않는다고 보고, 2012다89399·2012다94643 전원합의체 판결의 해당 부분을 변경했다. 새 법리는 판결 선고일 이후의 통상임금 산정부터 적용되고(장래효), 당해사건과 병행사건에만 소급된다. (a) 2024-11 연장근로: 2024-12-18까지 제공한 근로이고 D의 건은 병행사건이 아니므로 종래 법리가 적용된다. 재직조건부라 고정성이 없어 통상임금에 넣지 않는다. (b) 2025-03 연장근로: 새 법리가 적용되어 통상임금에 넣는다.",
+      "rubric": "정확: 사건번호·선고일·전원합의체 + (a) 미산입 (b) 산입 + 장래효/병행사건 예외. 둘 다 산입(전면 소급)이나 둘 다 미산입(구법리 유지)은 오답. 사건번호·선고일을 틀리거나 지어내면 환각. 법률 자문 아님.",
+      "as_of": "2026-10-12",
+      "tool_calls": [
+        {
+          "call_tag": "l_prec_search",
+          "server": "law",
+          "tool": "search_decisions",
+          "args": {
+            "domain": "precedent",
+            "query": "통상임금",
+            "options": {
+              "caseNumber": "2020다247190"
+            }
+          },
+          "called_at_utc": "2026-10-11T22:08:12Z",
+          "is_error": false,
+          "excerpt": "판례 검색 결과 (총 1건, 1페이지):\n\n[600537] 임금\n  사건번호: 2020다247190\n  법원: 대법원\n  선고일: 20241219\n  판결유형: 전원합의체 판결\n\n💡 다음: get_decision_text(domain=\"precedent\", id=\"600537\") 로 판결문 전문. full=true 로 축약 해제. 유사판례 원하면 execute_tool(tool_name=\"find_similar_precedents\", params={query:\"…\"}) 사용.\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "fcda24e279598d0285f7953a41781902f7978b8047697d62807c8f8a08ecd29f"
+        },
+        {
+          "call_tag": "l_prec_text",
+          "server": "law",
+          "tool": "get_decision_text",
+          "args": {
+            "domain": "precedent",
+            "id": "600537"
+          },
+          "called_at_utc": "2026-10-11T22:08:47Z",
+          "is_error": false,
+          "excerpt": "=== 임금 ===\n\n기본 정보:\n  사건번호: 2020다247190\n  법원: 대법원\n  선고일: 20241219\n  사건종류: 민사\n  판결유형: 전원합의체 판결\n\n판시사항:\n통상임금의 개념과 판단 기준 및 고정성을 통상임금의 개념적 징표로 볼 수 있는지 여부(소극) / 특정 시점에 재직 중인 근로자에게만 지급한다거나 일정 근무일수를 충족하여야만 지급한다는 조건이 부가되어 있다는 사정만으로 통상임금성이 부정되는지 여부(소극) 및 근무실적에 따라 지급되는 성과급이 통상임금에 해당하는지 여부(소극) / 통상임금 개념에 관한 새로운 법리의 효력 범위\n\n판결요지:\n(가) 통상임금 개념은 무엇보다 아래와 같이 기준임금으로서 요청되는 통상임금의 본질과 기능에 부합하는 방향으로 새로이 정립되어야 한다.\n첫째, 통상임금은 법적 개념이므로 원칙적으로 법령상 정의에 충실하게 해석해야 한다(법령 부합성). 둘째, 통상임금은 강행적 개념이므로 당사자가 법령상 통상임금의 범위를 임의로 변경할 수 없어야 한다(강행성). 셋째, 통상임금은 소정근로의 가치를 온전하게 담아낼 수 있는 개념이라야 한다(소정근로 가치 반영성). 넷째, 통상임금은 사전에 명확하게 산정될 수 있어야 한다(사전적 산정 가능성). 다섯째, 통상임금 개념은 연장·야간·휴일근로(이하 ‘연장근로 등’이라 한다)의 억제라는 근로기준법의 정책 목표에 부합하여야 한다(정책 부합성).\n위와 같은 요청을 종합적으로 고려할 때 종전 판례가 제시한 고정성 개념은 통상임금의 개념적 징표에서 제외하는 것이 옳다.\n(나) 근로기준법 시행령 제6조 제1항은 통상임금을 \"근로자에게 정기적이고 일률적으로 소정근로 또는 총근로에 대하여 지급하기로 정한 시간급 금액, 일급 금액, 주급 금액, 월급 금액 또는 도급 금액\"이라고 규정한다. 법령의 정의와 취지에 충실하게 통상임금 개념을 해석하면, 통상임금은 소정근로의 대가로서 정기적, 일률적으로 지급하기로 정한 임금을 말한다. 통상임금은 근로기준법이 규정한 여러 임금을 산정하는 기준이 되므로, 그 본질은 근로자가 소정근로시간에 제공하기로 정한 근로의 가치를 평가한 기준임금이라는 데에 있다. 정기성과 일률성은 그 임금이 소정근로의 대가인 임금임을 뒷받침하는 개념적 징표이다. 근로자가 소정근로를 온전하게 제공하면 그 대가로서 정기적, 일률적으로 지급하도록 정해진 임금은 그에 부가된 조건의 존부나 성취 가능성과 관계없이 통상임금에 해당한다. 임금에 부가된 조건은 해당 임금의 객관적 성질을 실질적으로 판단하는 과정에서 소정근로 대가성이나 정기성, 일률성을 부정하는 요소 중 하나로 고려될 수는 있지만, 단지 조건의 성취 여부가 불확실하다는 사정만으로 통상임금성이 부정된다고 볼 수는 없다.\n고정성이란 잣대 없이도, 근로자와 사용자가 소정근로시간에 제공하기로 정한 근로의 대가라는 ‘소정근로 대가성’, 임금의 지급 시기와 지급 대상이 미리 일정하게 정해졌을 것을 요구하는 ‘정기성’과 ‘일률성’의 개념을 통하여 통상임금에 해당하는지 여부를 올바르게 판단할 수 있다. 이러한 통상임금을 이루는 ",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "afdd50b1b992ebe0a71572029987c3ad63477b6b37bf2b214dafbd33a5675108"
+        }
+      ]
+    },
+    "F11": {
+      "item_id": "F11",
+      "domain": "korean_law",
+      "type": "법령·판례 인용 검증 (환각 탐지)",
+      "question": "법률 자문이 아닌 평가용 문항이다. 다음 문단의 법령·판례 인용을 한국 법령 MCP로 하나씩 검증하라. 각 인용을 \"실존·내용 일치 / 실존하나 서술 부정확 / 존재하지 않음 / 확인 불가\" 중 하나로 분류하고 근거를 밝혀라. 문단: 「직장 내 괴롭힘은 근로기준법 제76조의2에서 금지하고, 사용자의 조치의무는 같은 법 제76조의3, 신고자 보호는 같은 법 제76조의4에 규정되어 있다. 통상임금의 고정성 요건은 대법원 2013. 12. 18. 선고 2012다89399 전원합의체 판결에서 제시되었고, 대법원 2023다318727 판결이 이를 재확인하였다.」",
+      "gold": "제76조의2는 실존하고 내용이 일치한다(직장 내 괴롭힘의 금지). 제76조의3도 실존하고 일치한다(직장 내 괴롭힘 발생 시 조치). 제76조의4는 존재하지 않는다. 현행(2026-10-08 시행)과 시행예정본(2026-12-10, 2027-06-10) 모두에 없고, 신고자 불리한 처우 금지는 제76조의3제6항에 있다. 2012다89399는 실존한다(2013.12.18 전원합의체). 다만 고정성 요건 부분은 대법원 2024.12.19. 2020다247190 전원합의체 판결로 변경되었으므로 현재도 유효한 듯한 서술은 부정확하다. 2023다318727은 확인할 수 없다. 법제처 판례 DB 검색 결과가 없으므로 부존재로 단정하지 않되 \"재확인\" 내용은 근거가 없다고 해야 한다.",
+      "rubric": "정확: 5개 분류를 모두 맞힘(특히 76조의4 부존재, 2012다89399의 변경 사실, 2023다318727 확인 불가). 2023다318727을 \"존재하지 않음\"으로 단정하면 부분정확(DB 미수록 가능성). 그 판결 내용을 지어내면 환각. 76조의4를 실존이라 하면 환각. 법률 자문 아님.",
+      "as_of": "2026-10-12",
+      "tool_calls": [
+        {
+          "call_tag": "l_verify",
+          "server": "law",
+          "tool": "legal_analysis",
+          "args": {
+            "mode": "verify_citations",
+            "text": "직장 내 괴롭힘은 근로기준법 제76조의2에서 금지하고, 사용자의 조치의무는 같은 법 제76조의3, 신고자 보호는 같은 법 제76조의4에 규정되어 있다. 통상임금의 고정성 요건은 대법원 2013. 12. 18. 선고 2012다89399 전원합의체 판결에서 제시되었고, 대법원 2023다318727 판결이 이를 재확인하였다."
+          },
+          "called_at_utc": "2026-10-11T22:08:14Z",
+          "is_error": true,
+          "excerpt": "[HALLUCINATION_DETECTED] == 인용 검증 결과 ==\n법령 인용 3건 | ✓ 2 실존 | ✗ 1 오류 | ⌛ 0 폐지 | ⚠ 0 확인필요\n판례 인용 2건 | ✓ 1 실존 | ✗ 0 실존불가 | ⚠ 1 미확인\n\n▶ 법령 인용\n✓ 근로기준법 제76조의2(직장 내 괴롭힘의 금지) 실존\n✓ 근로기준법 제76조의3(직장 내 괴롭힘 발생 시 조치) 실존\n✗ 근로기준법 제76조의4 — [NOT_FOUND] 해당 조문 없음 (존재 범위: 제1조~제116조)\n\n▶ 판례 인용\n✓ 2012다89399 실존 — 대법원 2013.12.18 퇴직금\n⚠ 2023다318727 — 미확인 (법제처 수록 판례에서 검색되지 않음. 하급심·미수록 판례일 수 있어 부존재로 단정 불가)\n\n⚠️ [HALLUCINATION_DETECTED] 1건 인용이 법제처 DB에 실존하지 않거나 인용 내용(조문 제목)이 실제와 불일치합니다.\n   LLM이 지어낸 인용일 가능성이 높습니다. 원문을 수정하거나 사용자에게 '인용 오류'를 명시 보고하세요.\n   절대로 \"검증 완료\"로 답변하지 마세요.\n\n💡 판례 '미확인'은 부존재가 아닙니다 — 법제처 수록 판례는 대법원 중심이라 하급심·미수록 판례는 검색되지 않습니다. 부존재로 단정하지 말고 search_decisions로 교차 확인하세요.\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "6c7413302ec276b4474f634cd317e9807173d0b2ab3e19f5d6eeab2a7d37b4b6"
+        },
+        {
+          "call_tag": "l_g_76_3_cur",
+          "server": "law",
+          "tool": "get_law_text",
+          "args": {
+            "mst": "285279",
+            "jo": "제76조의3"
+          },
+          "called_at_utc": "2026-10-11T22:09:21Z",
+          "is_error": false,
+          "excerpt": "법령명: 근로기준법\n공포일: 20260407\n시행일: 20261008\nℹ️ 조회기준일 20261012 — 위 시행일 버전 본문. 연혁 MST로 조회한 경우 과거 버전일 수 있으니, 개정 여부가 의심되면 search_law로 [현행] MST를 재확인할 것.\n\n제76조의3 직장 내 괴롭힘 발생 시 조치\n제76조의3(직장 내 괴롭힘 발생 시 조치)\n① 누구든지 직장 내 괴롭힘 발생 사실을 알게 된 경우 그 사실을 사용자에게 신고할 수 있다.\n② 사용자는 제1항에 따른 신고를 접수하거나 직장 내 괴롭힘 발생 사실을 인지한 경우에는 지체 없이 당사자 등을 대상으로 그 사실 확인을 위하여 객관적으로 조사를 실시하여야 한다. <개정 2021.4.13>\n③ 사용자는 제2항에 따른 조사 기간 동안 직장 내 괴롭힘과 관련하여 피해를 입은 근로자 또는 피해를 입었다고 주장하는 근로자(이하 \"피해근로자등\"이라 한다)를 보호하기 위하여 필요한 경우 해당 피해근로자등에 대하여 근무장소의 변경, 유급휴가 명령 등 적절한 조치를 하여야 한다. 이 경우 사용자는 피해근로자등의 의사에 반하는 조치를 하여서는 아니 된다.\n④ 사용자는 제2항에 따른 조사 결과 직장 내 괴롭힘 발생 사실이 확인된 때에는 피해근로자가 요청하면 근무장소의 변경, 배치전환, 유급휴가 명령 등 적절한 조치를 하여야 한다.\n⑤ 사용자는 제2항에 따른 조사 결과 직장 내 괴롭힘 발생 사실이 확인된 때에는 지체 없이 행위자에 대하여 징계, 근무장소의 변경 등 필요한 조치를 하여야 한다. 이 경우 사용자는 징계 등의 조치를 하기 전에 그 조치에 대하여 피해근로자의 의견을 들어야 한다.\n⑥ 사용자는 직장 내 괴롭힘 발생 사실을 신고한 근로자 및 피해근로자등에게 해고나 그 밖의 불리한 처우를 하여서는 아니 된다.\n⑦ 제2항에 따라 직장 내 괴롭힘 발생 사실을 조사한 사람, 조사 내용을 보고받은 사람 및 그 밖에 조사 과정에 참여한 사람은 해당 조사 과정에서 알게 된 비밀을 피해근로자등의 의사에 반하여 다른 사람에게 누설하여서는 아니 된다. 다만, 조사와 관련된 내용을 사용자에게 보고하거나 관계 기관의 요청에 따라 필요한 정보를 제공하는 경우는 제외한다. <신설 2021.4.13>\n\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "200d55d3a61bd68c077ee51e2c44e3d33da32c29f1c12139ed5fbef463b5dc90"
+        },
+        {
+          "call_tag": "l_g_76_4_1210",
+          "server": "law",
+          "tool": "get_law_text",
+          "args": {
+            "mst": "286771",
+            "jo": "제76조의4",
+            "efYd": "20261210"
+          },
+          "called_at_utc": "2026-10-11T22:08:46Z",
+          "is_error": true,
+          "excerpt": "법령명: 근로기준법\n공포일: 20260609\n시행일: 20261210\n⚠️ 특정 시행일자(efYd=20261210) 버전 조회 — 현행 법령이 아닐 수 있음. 현행 기준 답변에는 efYd 없이 재조회할 것.\n\n[NOT_FOUND] 조문 내용을 찾을 수 없습니다.\n⚠️ LLM은 조문을 추측/생성하지 말고 아래 안내대로 재조회하세요.\n\n[NOT_FOUND] 조문을 찾을 수 없습니다. 다음을 시도해보세요:\n   - 전체 법령 조회 (jo 파라미터 생략)\n   - 키워드 검색 (search_all 도구 사용)",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "40bc64706adfc6afdc589a3a43b97d93faa5814310bd638d6d2ac9927b735fab"
+        },
+        {
+          "call_tag": "l_g_76_4_270610",
+          "server": "law",
+          "tool": "get_law_text",
+          "args": {
+            "mst": "286771",
+            "jo": "제76조의4",
+            "efYd": "20270610"
+          },
+          "called_at_utc": "2026-10-11T22:08:47Z",
+          "is_error": true,
+          "excerpt": "법령명: 근로기준법\n공포일: 20260609\n시행일: 20270610\n⚠️ 특정 시행일자(efYd=20270610) 버전 조회 — 현행 법령이 아닐 수 있음. 현행 기준 답변에는 efYd 없이 재조회할 것.\n\n[NOT_FOUND] 조문 내용을 찾을 수 없습니다.\n⚠️ LLM은 조문을 추측/생성하지 말고 아래 안내대로 재조회하세요.\n\n[NOT_FOUND] 조문을 찾을 수 없습니다. 다음을 시도해보세요:\n   - 전체 법령 조회 (jo 파라미터 생략)\n   - 키워드 검색 (search_all 도구 사용)",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "644bf64f74fd50ffee20ac8ee2c2161f26b7a652b889d6b144064a0b0983bb76"
+        },
+        {
+          "call_tag": "l_prec_2023da318727",
+          "server": "law",
+          "tool": "search_decisions",
+          "args": {
+            "domain": "precedent",
+            "query": "318727",
+            "options": {
+              "caseNumber": "2023다318727"
+            }
+          },
+          "called_at_utc": "2026-10-11T22:09:21Z",
+          "is_error": true,
+          "excerpt": "[NOT_FOUND] '318727' 판례 검색 결과가 없습니다.\n\n⚠️ LLM은 판례를 추측/생성하지 마세요. 사용자에게 '검색 실패'를 보고하세요.\n\n대안:\n  1. 해석례 검색: search_decisions(domain=\"interpretation\", query=\"318727\")\n  2. 법령 검색: search_law(query=\"318727\")",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "188c9284e523ee19f7f3957c6397edbd0dbf11b25605884253cf9cc9d87031de"
+        },
+        {
+          "call_tag": "l_prec_text",
+          "server": "law",
+          "tool": "get_decision_text",
+          "args": {
+            "domain": "precedent",
+            "id": "600537"
+          },
+          "called_at_utc": "2026-10-11T22:08:47Z",
+          "is_error": false,
+          "excerpt": "=== 임금 ===\n\n기본 정보:\n  사건번호: 2020다247190\n  법원: 대법원\n  선고일: 20241219\n  사건종류: 민사\n  판결유형: 전원합의체 판결\n\n판시사항:\n통상임금의 개념과 판단 기준 및 고정성을 통상임금의 개념적 징표로 볼 수 있는지 여부(소극) / 특정 시점에 재직 중인 근로자에게만 지급한다거나 일정 근무일수를 충족하여야만 지급한다는 조건이 부가되어 있다는 사정만으로 통상임금성이 부정되는지 여부(소극) 및 근무실적에 따라 지급되는 성과급이 통상임금에 해당하는지 여부(소극) / 통상임금 개념에 관한 새로운 법리의 효력 범위\n\n판결요지:\n(가) 통상임금 개념은 무엇보다 아래와 같이 기준임금으로서 요청되는 통상임금의 본질과 기능에 부합하는 방향으로 새로이 정립되어야 한다.\n첫째, 통상임금은 법적 개념이므로 원칙적으로 법령상 정의에 충실하게 해석해야 한다(법령 부합성). 둘째, 통상임금은 강행적 개념이므로 당사자가 법령상 통상임금의 범위를 임의로 변경할 수 없어야 한다(강행성). 셋째, 통상임금은 소정근로의 가치를 온전하게 담아낼 수 있는 개념이라야 한다(소정근로 가치 반영성). 넷째, 통상임금은 사전에 명확하게 산정될 수 있어야 한다(사전적 산정 가능성). 다섯째, 통상임금 개념은 연장·야간·휴일근로(이하 ‘연장근로 등’이라 한다)의 억제라는 근로기준법의 정책 목표에 부합하여야 한다(정책 부합성).\n위와 같은 요청을 종합적으로 고려할 때 종전 판례가 제시한 고정성 개념은 통상임금의 개념적 징표에서 제외하는 것이 옳다.\n(나) 근로기준법 시행령 제6조 제1항은 통상임금을 \"근로자에게 정기적이고 일률적으로 소정근로 또는 총근로에 대하여 지급하기로 정한 시간급 금액, 일급 금액, 주급 금액, 월급 금액 또는 도급 금액\"이라고 규정한다. 법령의 정의와 취지에 충실하게 통상임금 개념을 해석하면, 통상임금은 소정근로의 대가로서 정기적, 일률적으로 지급하기로 정한 임금을 말한다. 통상임금은 근로기준법이 규정한 여러 임금을 산정하는 기준이 되므로, 그 본질은 근로자가 소정근로시간에 제공하기로 정한 근로의 가치를 평가한 기준임금이라는 데에 있다. 정기성과 일률성은 그 임금이 소정근로의 대가인 임금임을 뒷받침하는 개념적 징표이다. 근로자가 소정근로를 온전하게 제공하면 그 대가로서 정기적, 일률적으로 지급하도록 정해진 임금은 그에 부가된 조건의 존부나 성취 가능성과 관계없이 통상임금에 해당한다. 임금에 부가된 조건은 해당 임금의 객관적 성질을 실질적으로 판단하는 과정에서 소정근로 대가성이나 정기성, 일률성을 부정하는 요소 중 하나로 고려될 수는 있지만, 단지 조건의 성취 여부가 불확실하다는 사정만으로 통상임금성이 부정된다고 볼 수는 없다.\n고정성이란 잣대 없이도, 근로자와 사용자가 소정근로시간에 제공하기로 정한 근로의 대가라는 ‘소정근로 대가성’, 임금의 지급 시기와 지급 대상이 미리 일정하게 정해졌을 것을 요구하는 ‘정기성’과 ‘일률성’의 개념을 통하여 통상임금에 해당하는지 여부를 올바르게 판단할 수 있다. 이러한 통상임금을 이루는 ",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "afdd50b1b992ebe0a71572029987c3ad63477b6b37bf2b214dafbd33a5675108"
+        }
+      ]
+    },
+    "F12": {
+      "item_id": "F12",
+      "domain": "korean_law",
+      "type": "법률→시행령 위임 기준 사례 판단 (신설 시행령)",
+      "question": "법률 자문이 아닌 평가용 문항이다. 2026-10-12 기준. 다음 두 법인이 개인정보 보호법 제31조제3항(개인정보 보호책임자 지정·변경·해제 시 이사회 의결 및 보호위원회 신고 의무)의 적용 대상인지 판단하라. E사: 연간 매출액 2,000억원의 온라인 쇼핑몰, 개인정보를 처리하는 정보주체 80만 명, 그중 민감정보·고유식별정보 처리 3만 명. F사: 연간 매출액 1,900억원, 개인정보를 처리하는 정보주체 120만 명. 대상인 회사가 2026-09-11 전에 이미 CPO를 지정해 두었다면 신고 기한은 어떻게 되는가? 법률과 시행령 조문 번호를 들어 답하라.",
+      "gold": "법 제31조제3항(2026-09-11 시행)의 대상 기준은 시행령 제32조제3항(2026.9.10 신설)에 있다. 1호는 연간 매출액등 1,800억원 초과이면서 가목(5만 명 이상의 민감정보·고유식별정보 처리) 또는 나목(100만 명 이상의 개인정보 처리) 중 하나에 해당하는 자다. 2호는 재학생 2만 명 이상 대학, 3호는 상급종합병원, 4호는 공공시스템운영기관이다. E사는 매출 요건을 충족하지만 민감·고유식별정보 3만 명(5만 명 미만), 전체 80만 명(100만 명 미만)이라 대상이 아니다. F사는 1,900억원 > 1,800억원이고 120만 명 ≥ 100만 명이라 대상이다. 신고 기한은 원칙적으로 지정·변경·해제 사유 발생일부터 6개월 이내다(시행령 제32조제4항, 부득이한 사유가 있으면 1년 범위에서 연장). 시행 전에 이미 지정한 경우 시행령 부칙(제36671호) 제2조에 따라 시행일(2026-09-11)부터 6개월 이내에 신고해야 한다.",
+      "rubric": "정확: E 비대상, F 대상 + 1,800억원 및 5만/100만 명 기준 + 부칙의 시행일부터 6개월. 매출 요건만으로 둘 다 대상이라 하면 오답. 기준 수치를 지어내면 환각. 2026-09 시행령 신설이라 모델 기억으로는 답하기 어렵고 도구 조회가 필요한 변별 문항이다. 6개월의 말일(2027-03-10 또는 03-11) 계산 표현 차이는 감점하지 않는다. 법률 자문 아님.",
+      "as_of": "2026-10-12 (법 MST 283839 시행 2026-09-11; 시행령 MST 289537 시행 2026-09-11)",
+      "tool_calls": [
+        {
+          "call_tag": "l_s_pipa",
+          "server": "law",
+          "tool": "search_law",
+          "args": {
+            "query": "개인정보 보호법",
+            "display": 5
+          },
+          "called_at_utc": "2026-10-11T22:04:59Z",
+          "is_error": false,
+          "excerpt": "검색 결과 (총 2건):\n\n📍 정확매칭 (1건):\n1. 개인정보 보호법 [현행]\n   - 법령ID: 011357\n   - MST: 283839\n   - 공포일: 20260310 / 시행일: 20260911\n   - 구분: 법률\n\n📂 부분매칭 (1건 중 1건 표시):\n2. 개인정보 보호법 시행령 [현행]\n   - 법령ID: 011468\n   - MST: 289537\n   - 공포일: 20260910 / 시행일: 20260911\n   - 구분: 대통령령\n\n🔜 「개인정보 보호법」 개정 시행예정 (일부개정, 2026-09-08 공포 제21910호, 시행 2027-03-09) — 시행예정본 조문: get_law_text(mst=\"289415\", efYd=\"20270309\")\n🔜 「개인정보 보호법」 개정 시행예정 (일부개정, 2026-03-10 공포 제21445호, 시행 2027-07-01) — 시행예정본 조문: get_law_text(mst=\"283839\", efYd=\"20270701\")\n💡 다음: get_law_text(mst=\"283839\") 로 「개인정보 보호법」 조문 전문. 특정 조문만은 jo=\"제N조\" 추가.\n",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "c7ba24556b6dd6988c898b74cc534bc8b15882e1b6aa4856a00f9f80406b524b"
+        },
+        {
+          "call_tag": "l_p_apply_31",
+          "server": "law",
+          "tool": "legal_analysis",
+          "args": {
+            "mode": "applicable_law",
+            "lawName": "개인정보 보호법",
+            "date": "2026-10-12",
+            "jo": "제31조"
+          },
+          "called_at_utc": "2026-10-11T22:06:44Z",
+          "is_error": false,
+          "excerpt": "═══ 행위시법 판단: 개인정보 보호법 @ 2026.10.12 ═══\n\n▶ 기준일에 시행 중이던 버전\n  개인정보 보호법 [시행 2026.09.11] [제21445호, 2026.03.10, 일부개정] (MST 283839)\n  ↳ 이 버전이 현행입니다 (기준일 이후 개정 없음)\n  ⚠️ 시행 예정 개정 2건 존재 — 최근접: 시행 2027.03.09 (제21910호, 일부개정). 기준일 판단에는 영향 없으나, 현행 인용이나 향후 절차 관련 서면에는 개정 내용 확인 필수: get_law_text(mst=\"289415\")\n\n▶ 기준일 시점 조문: 제31조\n제31조(개인정보 보호책임자의 지정 등)\n① 개인정보처리자는 개인정보의 처리 및 보호에 관한 업무를 총괄해서 담당할 개인정보 보호책임자를 지정하여야 한다. 다만, 종업원 수, 매출액 등이 대통령령으로 정하는 기준에 해당하는 개인정보처리자의 경우에는 지정하지 아니할 수 있다. <개정 2023.3.14, 2026.3.10>\n② 제1항 단서에 따라 개인정보 보호책임자를 지정하지 아니하는 경우에는 개인정보처리자의 사업주 또는 대표자가 개인정보 보호책임자가 된다. <신설 2023.3.14>\n③ 매출액, 개인정보의 보유 규모 등을 고려하여 대통령령으로 정하는 기준에 해당하는 개인정보처리자는 다음 각 호의 사항을 준수하여야 한다. <신설 2026.3.10>\n1. 개인정보 보호책임자를 지정하거나 그 지정을 변경 또는 해제할 때에는 이사회(법인인 경우로 한정한다. 이하 같다)의 의결을 거칠 것\n2. 보호위원회에 대통령령으로 정하는 바에 따라 개인정보 보호책임자 지정ㆍ변경 또는 해제에 관한 사항을 신고할 것\n④ 개인정보 보호책임자는 다음 각 호의 업무를 수행한다. <개정 2023.3.14, 2026.3.10>\n1. 개인정보 보호 계획의 수립 및 시행\n2. 개인정보 보호에 필요한 전문 인력의 관리 및 예산의 확보\n3. 사업주 또는 대표자 및 이사회에 대한 개인정보 보호 현황 및 주요 사항의 보고\n4. 개인정보 처리 및 보호의 실태와 관행에 대한 정기적인 조사 및 개선\n5. 개인정보 처리와 관련한 불만의 처리 및 피해 구제\n6. 개인정보 유출 및 오용ㆍ남용 방지를 위한 내부통제시스템의 구축\n7. 개인정보 보호 교육 계획의 수립 및 시행\n8. 개인정보파일의 보호 및 관리ㆍ감독\n9. 그 밖에 개인정보의 적절한 처리 및 보호를 위하여 대통령령으로 정한 업무\n⑤ 개인정보 보호책임자는 제4항 각 호의 업무를 수행함에 있어서 필요한 경우 개인정보의 처리 현황, 처리 체계 등에 대하여 수시로 조사하거나 관계 당사자로부터 보고를 받을 수 있다. <개정 2023.3.14, 2026.3.10>\n⑥ 개인정보 보호책임자는 개인정보 보호와 관련하여 이 법 및 다른 관계 법령의 위반 사실을 알게 된 경우에는 즉시 개선조치를 하여야 하며, 필요하면 소속 기관 또는 단체의 장에게 개선조치를 보고하여야 한다. <개정 2023.3.14, 2026.3.10>\n⑦ 개인정보처리자는 개인정보 보호책임자가 제4항 각 호의 업무를 수행함에 있어서 정당한",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "8e13802ab42403348b326991f7748a4ba3854043c24109d84a603b2766c484c2"
+        },
+        {
+          "call_tag": "l_pd_32",
+          "server": "law",
+          "tool": "get_law_text",
+          "args": {
+            "mst": "289537",
+            "jo": "제32조"
+          },
+          "called_at_utc": "2026-10-11T22:09:19Z",
+          "is_error": false,
+          "excerpt": "법령명: 개인정보 보호법 시행령\n공포일: 20260910\n시행일: 20260911\nℹ️ 조회기준일 20261012 — 위 시행일 버전 본문. 연혁 MST로 조회한 경우 과거 버전일 수 있으니, 개정 여부가 의심되면 search_law로 [현행] MST를 재확인할 것.\n\n제32조 개인정보 보호책임자의 지정 등\n제32조(개인정보 보호책임자의 지정 등)\n① 법 제31조제1항 단서에서 \"종업원 수, 매출액 등이 대통령령으로 정하는 기준에 해당하는 개인정보처리자\"란 「소상공인기본법」 제2조제1항에 따른 소상공인에 해당하는 개인정보처리자를 말한다. <신설 2024.3.12>\n② 개인정보처리자는 법 제31조제1항에 따라 개인정보 보호책임자를 지정하려는 경우에는 다음 각 호의 구분에 따라 지정해야 한다. 이 경우 제3항에 따른 개인정보처리자는 다음 각 호의 구분에 따른 사람 중 별표 1에 따른 개인정보 보호책임자의 자격을 갖춘 사람을 개인정보 보호책임자로 지정해야 한다. <개정 2016.7.22, 2024.3.12, 2026.9.10>\n1. 공공기관: 다음 각 목의 구분에 따른 기준에 해당하는 공무원 등\n가. 국회, 법원, 헌법재판소, 중앙선거관리위원회의 행정사무를 처리하는 기관 및 중앙행정기관: 고위공무원단에 속하는 공무원(이하 \"고위공무원\"이라 한다) 또는 그에 상당하는 공무원\n나. 가목 외에 정무직공무원을 장(長)으로 하는 국가기관: 3급 이상 공무원(고위공무원을 포함한다) 또는 그에 상당하는 공무원\n다. 가목 및 나목 외에 고위공무원, 3급 공무원 또는 그에 상당하는 공무원 이상의 공무원을 장으로 하는 국가기관: 4급 이상 공무원 또는 그에 상당하는 공무원\n라. 가목부터 다목까지의 규정에 따른 국가기관 외의 국가기관(소속 기관을 포함한다): 해당 기관의 개인정보 처리 관련 업무를 담당하는 부서의 장\n마. 시ㆍ도 및 시ㆍ도 교육청: 3급 이상 공무원 또는 그에 상당하는 공무원\n바. 시ㆍ군 및 자치구: 4급 이상 공무원 또는 그에 상당하는 공무원\n사. 제2조제5호에 따른 각급 학교: 해당 학교의 행정사무를 총괄하는 사람. 다만, 제3항제2호에 해당하는 경우에는 교직원을 말한다.\n아. 가목부터 사목까지의 규정에 따른 기관 외의 공공기관: 개인정보 처리 관련 업무를 담당하는 부서의 장. 다만, 개인정보 처리 관련 업무를 담당하는 부서의 장이 2명 이상인 경우에는 해당 공공기관의 장이 지명하는 부서의 장이 된다.\n2. 공공기관 외의 개인정보처리자: 다음 각 목의 어느 하나에 해당하는 사람\n가. 사업주 또는 대표자\n나. 임원(「상법」 제401조의2제1항제3호에 따라 회사의 업무를 집행한 자와 같은 법 제408조의2제1항에 따른 집행임원을 포함하며, 임원이 없는 경우에는 개인정보 처리 관련 업무를 담당하는 부서의 장을 말한다)\n③ 법 제31조제3항 각 호 외의 부분에서 \"대통령령으로 정하는 기준에 해당하는 개인정보처리자\"란 다음 각 호의 어느 하나에 해당하는 개인정보처리자(공공기관의 경우에는 제2조제2호, 제3호, 제3호의2, 제4호 및 제5호에 해당하는 ",
+          "excerpt_note": "Public sanitized excerpt; full response and original digest are private.",
+          "public_excerpt_sha256": "7552abeec119d7b3f845f0f48d982bb151b29939fa0b0df3dde7a30c5e2fa364"
+        }
+      ],
+      "official_sources": [
+        {
+          "source": "law.go.kr DRF lawService.do (official 국가법령정보센터 Open API, OC key redacted)",
+          "file": "pipa_dec_289537.json",
+          "sha256": "0034d4be914ef1cd535f15bba8e84237a51c0a054d95825f969db068c9cba9c1",
+          "bytes": 553447,
+          "note": "개인정보 보호법 시행령 MST 289537 DRF 전문(부칙 포함)",
+          "buchik_excerpt": "부칙 <제36671호,2026.9.10>\n제1조(시행일) 이 영은 2026년 9월 11일부터 시행한다.\n제2조(개인정보 보호책임자의 지정 신고에 관한 특례) 제32조제4항의 개정규정에도 불구하고 같은 조 제3항의 개정규정에 따른 기준에 해당하는 개인정보처리자로서 이 영 시행 전에 개인정보 보호책임자를 지정한 개인정보처리자는 이 영 시행일부터 6개월 이내에 같은 조 제4항의 개정규정에 따라 보호위원회에 신고해야 한다.\n제3조(다른 법령의 개정) 「신용정보의 이용 및 보호에 관한 법률 시행령」 제34조의4제8항 중 \"「개인정보 보호법」 제34조제3항\"을 \"「개인정보 보호법」 제34조제4항\"으로 한다."
+        }
+      ]
+    }
+  }
+}

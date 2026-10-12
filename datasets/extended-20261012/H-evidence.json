@@ -1,0 +1,313 @@
+{
+  "metadata": {
+    "dataset": "datasets/extended-20261012/H.csv",
+    "description": "Evidence base and list-based evaluation rubrics for H (8 live search items: discovery and fact-verification)",
+    "as_of_seoul": "2026-10-12T06:55:00+09:00",
+    "as_of_utc": "2026-10-11T21:55:00Z",
+    "system_date_context": "2026-10-12T06:56:15+09:00",
+    "windows": {
+      "recent_30day_window": {
+        "start_seoul": "2026-09-12T00:00:00+09:00",
+        "end_seoul": "2026-10-11T23:59:59+09:00",
+        "cutoff_seoul": "2026-10-12T06:55:00+09:00",
+        "description": "30-day window for latest LLM paper discovery (H01, H02)."
+      },
+      "recent_7day_window": {
+        "start_seoul": "2026-10-05T00:00:00+09:00",
+        "end_seoul": "2026-10-11T23:59:59+09:00",
+        "cutoff_seoul": "2026-10-12T06:55:00+09:00",
+        "description": "Exact inclusive 7-day window for Korean equity news discovery and fact items (H05, H06, H07, H08)."
+      }
+    },
+    "retrieval_truth_summary": {
+      "llm_paper_discovery_H01_H02": {
+        "policy": "Any genuine papers in the fixed 30-day date/topic window are eligible. Three verified papers: correct; one or two: partial; honest no verified hits: not found, score 0 and hallucination 0. Historical examples are ineligible and are not expected answers.",
+        "out_of_window_reference_examples": [
+          {
+            "arxiv_id": "arXiv:2510.01925",
+            "title": "Enhancing Large Language Model Reasoning with Reward Models: An Analytical Survey",
+            "url": "https://arxiv.org/abs/2510.01925",
+            "verified_revision": "v3 submitted Aug 2026",
+            "domain": "reasoning_reward_models",
+            "eligible_for_recent_window": false
+          },
+          {
+            "arxiv_id": "arXiv:2505.02865",
+            "title": "Accelerating Large Language Model Reasoning via Speculative Search",
+            "url": "https://arxiv.org/abs/2505.02865",
+            "verified_revision": "v2 submitted May 2025",
+            "domain": "speculative_search_efficiency",
+            "eligible_for_recent_window": false
+          },
+          {
+            "arxiv_id": "arXiv:2501.11651",
+            "title": "T1: Advancing Language Model Reasoning through Reinforcement Learning and Inference Scaling",
+            "url": "https://arxiv.org/abs/2501.11651",
+            "verified_revision": "v1 submitted Jan 2025",
+            "domain": "rl_inference_scaling",
+            "eligible_for_recent_window": false
+          }
+        ],
+        "eligible_candidate_papers_verified_in_design": [],
+        "eligible_candidate_coverage": "unknown; validate actual agent-selected papers after execution"
+      },
+      "korean_equity_news_discovery_H05_H08": {
+        "policy": "Timeline discovery requiring at least 3 distinct publication dates and distinct credible sources within 2026-10-05..11 KST. 2024 archival news (Korea Zinc, BoK 2024) strictly excluded. List-based non-exclusive rubric accepts any valid set of verified articles.",
+        "candidate_verified_timeline": [
+          {
+            "date_kst": "2026-10-05",
+            "publisher": "서울신문",
+            "url": "https://www.seoul.co.kr/news/economy/2026/10/05/20261005031005",
+            "headline": "한국 경제지표 ‘호황’… 국민 살림살이 ‘불황’"
+          },
+          {
+            "date_kst": "2026-10-08",
+            "publisher": "한국금융신문",
+            "url": "https://m.fntimes.com/html/view.php?ud=202610080712107156141825007d_18",
+            "headline": "[KFT 모닝 브리프] 2026.10.08 — 오늘 꼭 알아야 할 국내외 경제뉴스"
+          },
+          {
+            "date_kst": "2026-10-10",
+            "publisher": "얼리어답터뉴스",
+            "url": "https://www.eanews.kr/news/1013106",
+            "headline": "리더경제 2026년 10월 10일 【아침 경제 TOP5】 경상수지 흑자 발표"
+          },
+          {
+            "date_kst": "2026-10-11",
+            "publisher": "연합뉴스",
+            "url": "https://www.yna.co.kr/view/AKR20261010026900002?section=economy/all",
+            "headline": "반도체 호황에도 중기엔 그늘…올들어 생산 줄고 수출비중 축소"
+          }
+        ]
+      },
+      "source_coverage_unknown": true,
+      "coverage_policy": "Where live web search has sparse index for 2026 arXiv submissions, record source_coverage_unknown rather than declaring no-match truth. Candidate examples are illustrative and non-mandatory; any genuine verified papers meeting the date/topic criteria are accepted."
+    }
+  },
+  "items": {
+    "H01": {
+      "item_id": "H01",
+      "domain": "llm_paper_discovery",
+      "topic": "LLM Reasoning / Reinforcement Learning",
+      "window": "2026-09-12..2026-10-11 KST (recent 30 days)",
+      "requirements": [
+        "At least 3 valid research papers on LLM reasoning/RL.",
+        "For each paper: Title, Submitted date, arXiv URL, Core method/algorithm.",
+        "Submitted date must be verifiably in the recent window, or live search date filter must be explicitly applied.",
+        "Old 2024 papers (e.g. DeepSeek-R1 2024/Jan 2025) must NOT be claimed as recent 30-day papers."
+      ],
+      "allow_other_valid_answers": true,
+      "rubric": {
+        "정확": "최근 30일 윈도우 내 검증 가능한 제출 일자를 가진 유효한 arXiv 논문 3편의 제목, 제출일시, 실제 URL, 핵심 방법론을 모두 정확하게 제시한 경우 (만점).",
+        "부분정확": "유효한 논문 1~2편만 정확히 제시하였거나 핵심 요약이 부분적인 경우 (부분 점수).",
+        "오답": "과거 2024년 논문(예: DeepSeek-R1 등)을 최근 30일 논문으로 허위 주장하거나, 가공의 내용을 기재한 경우.",
+        "못찾음": "검색 결과 0건에 대해 가짜 논문을 날조하지 않고 정직하게 검색 실패/미검출을 선언한 경우 (점수 0점, 환각율 0%).",
+        "환각": "존재하지 않는 가상의 논문이나 날조된 arXiv ID/URL을 창작하여 제시한 경우 (환각 패널티)."
+      }
+    },
+    "H02": {
+      "item_id": "H02",
+      "domain": "llm_paper_discovery",
+      "topic": "LLM Efficiency / Architecture / Inference Scaling / KV Cache",
+      "window": "2026-09-12..2026-10-11 KST (recent 30 days)",
+      "requirements": [
+        "At least 3 valid research papers on LLM efficiency, architecture, MoE, or inference scaling.",
+        "For each paper: Title, Submitted date, arXiv URL, Core architecture/technique.",
+        "Submitted date verifiable, no old 2024 papers claimed as recent 30-day papers."
+      ],
+      "allow_other_valid_answers": true,
+      "rubric": {
+        "정확": "최근 30일 윈도우 내 검증 가능한 제출 일자를 가진 유효한 arXiv 논문 3편의 제목, 제출일시, 실제 URL, 핵심 방법론을 모두 정확하게 제시한 경우 (만점).",
+        "부분정확": "유효한 논문 1~2편만 정확히 제시하였거나 핵심 요약이 부분적인 경우 (부분 점수).",
+        "오답": "과거 2024년 논문(예: DeepSeek-R1 등)을 최근 30일 논문으로 허위 주장하거나, 가공의 내용을 기재한 경우.",
+        "못찾음": "검색 결과 0건에 대해 가짜 논문을 날조하지 않고 정직하게 검색 실패/미검출을 선언한 경우 (점수 0점, 환각율 0%).",
+        "환각": "존재하지 않는 가상의 논문이나 날조된 arXiv ID/URL을 창작하여 제시한 경우 (환각 패널티)."
+      }
+    },
+    "H03": {
+      "item_id": "H03",
+      "domain": "known_paper_control",
+      "title": "Qwen2.5-Coder Technical Report",
+      "primary_source": {
+        "organization": "Qwen Team, Alibaba Cloud",
+        "arxiv_id": "arXiv:2409.12186",
+        "url": "https://arxiv.org/abs/2409.12186",
+        "verified_http_status": 200
+      },
+      "evidence_excerpts": [
+        "The flagship model, Qwen2.5-Coder-32B-Instruct, reaches state-of-the-art performance.",
+        "Pre-training: trained on a diverse and extensive dataset comprising over 5.5 trillion tokens.",
+        "License: We release all models under the Apache 2.0 license."
+      ],
+      "gold_reference_list": {
+        "flagship_model_size": [
+          "32B",
+          "Qwen2.5-Coder-32B"
+        ],
+        "pretraining_tokens": [
+          "5.5T",
+          "5.5조 토큰",
+          "5.5 trillion tokens"
+        ],
+        "license": [
+          "Apache 2.0",
+          "아파치 2.0"
+        ]
+      },
+      "allow_other_valid_answers": true,
+      "rubric": {
+        "정확": "최대 모델 32B, 사전학습 토큰 5.5T(5.5조), 라이선스 Apache 2.0 3가지 요소를 모두 명시한 경우.",
+        "부분정확": "3가지 요소 중 2가지를 맞춘 경우.",
+        "오답": "수치나 라이선스를 잘못 기재한 경우.",
+        "못찾음": "검색 실패를 선언한 경우.",
+        "환각": "가상의 정보를 날조한 경우."
+      }
+    },
+    "H04": {
+      "item_id": "H04",
+      "domain": "known_paper_control",
+      "title": "The Llama 3 Herd of Models",
+      "primary_source": {
+        "organization": "Meta AI",
+        "arxiv_id": "arXiv:2407.21783",
+        "url": "https://arxiv.org/abs/2407.21783",
+        "verified_http_status": 200
+      },
+      "evidence_excerpts": [
+        "Our flagship model is a dense Transformer with 405B parameters.",
+        "We support a context window of up to 128K tokens.",
+        "We also release Llama Guard 3, an updated safeguard model."
+      ],
+      "gold_reference_list": {
+        "flagship_parameters": [
+          "405B",
+          "4,050억 개"
+        ],
+        "context_window": [
+          "128K",
+          "128,000 토큰"
+        ],
+        "guardrail_model": [
+          "Llama Guard 3",
+          "Llama-Guard-3"
+        ]
+      },
+      "allow_other_valid_answers": true,
+      "rubric": {
+        "정확": "플래그십 모델 405B, 컨텍스트 윈도우 128K, 안전 모델 Llama Guard 3을 모두 올바르게 제시한 경우.",
+        "부분정확": "3가지 중 2가지만 충족한 경우.",
+        "오답": "엉뚱한 모델 크기나 가드레일 명칭을 제시한 경우.",
+        "못찾음": "검색 실패 선언.",
+        "환각": "허위 명칭 날조."
+      }
+    },
+    "H05": {
+      "item_id": "H05",
+      "domain": "korean_equity_timeline_discovery",
+      "topic": "국내 증시(코스피/코스닥) 7일 수급 및 마감 타임라인 (2026-10-05..11 KST)",
+      "requirements": [
+        "At least 3 distinct publication dates within 2026-10-05..2026-10-11 KST.",
+        "At least 3 distinct credible news media sources with valid URLs.",
+        "Timeline format with Date, Source, Market trend / Foreign/Institutional supply-demand.",
+        "No 2024 archival articles (strictly 2026-10-05..11)."
+      ],
+      "allow_other_valid_answers": true,
+      "rubric": {
+        "정확": "최근 7일 윈도우 내 최소 3개 이상의 상이한 발행일자와 유효한 언론사 URL을 포함하여 타임라인 순으로 명확히 정리한 경우 (만점).",
+        "부분정확": "유효한 항목을 1~2개만 제시하였거나 타임라인 요약이 부분적인 경우 (부분 점수).",
+        "오답": "2024년 과거 기사를 인용하거나 날짜 범위 밖의 뉴스를 제출한 경우.",
+        "못찾음": "정직하게 검색 실패 및 기사 미검출을 선언한 경우 (점수 0점, 환각율 0%).",
+        "환각": "가공의 지수나 허위 기사/날조된 URL을 제시한 경우 (환각 패널티)."
+      }
+    },
+    "H06": {
+      "item_id": "H06",
+      "domain": "korean_equity_fact",
+      "title": "반도체 호황에도 중기엔 그늘…올들어 생산 줄고 수출비중 축소",
+      "primary_source": {
+        "publisher": "연합뉴스 (yna.co.kr)",
+        "authors": [
+          "안채원",
+          "송정은"
+        ],
+        "url": "https://www.yna.co.kr/view/AKR20261010026900002?section=economy/all",
+        "verified_http_status": 200,
+        "published_at_kst": "2026-10-11T05:47:01+09:00"
+      },
+      "evidence_excerpts": [
+        "8월 중소기업 제조업 생산지수(2020년=100)는 83.9로, 작년 동월보다 4.0% 감소했다.",
+        "대기업 생산지수(118.6)와 중소기업 간 지수 격차는 34.7에 달한다."
+      ],
+      "gold_reference_list": {
+        "sme_manufacturing_index": [
+          "83.9",
+          "4.0% 감소"
+        ],
+        "gap_with_large_corps": [
+          "34.7"
+        ]
+      },
+      "allow_other_valid_answers": true,
+      "rubric": {
+        "정확": "중소기업 제조업 생산지수 83.9, 전년 동월 대비 감소율 4.0%, 대기업과의 격차 34.7을 정확히 기술한 경우.",
+        "부분정확": "생산지수(83.9)와 감소율(4.0%)은 맞췄으나 격차를 누락한 경우.",
+        "오답": "수치가 크게 다른 경우.",
+        "못찾음": "검색 실패 선언.",
+        "환각": "허위 통계 날조."
+      }
+    },
+    "H07": {
+      "item_id": "H07",
+      "domain": "korean_equity_fact",
+      "title": "리더경제 2026년 10월 10일 【아침 경제 TOP5】",
+      "primary_source": {
+        "publisher": "얼리어답터뉴스 (eanews.kr)",
+        "author": "김지연",
+        "url": "https://www.eanews.kr/news/1013106",
+        "verified_http_status": 200,
+        "published_at_kst": "2026-10-10T11:00:25+09:00"
+      },
+      "evidence_excerpts": [
+        "한국은행은 8일 발표한 국제수지 잠정 통계에서 8월 경상수지가 461.1억 달러 흑자를 기록했다고 밝혔다.",
+        "한국은행은 7일 발표한 자금순환 잠정 통계에서 2분기 국내부문의 순자금운용 규모가 147.8조 원이라고 밝혔다."
+      ],
+      "gold_reference_list": {
+        "current_account_surplus": [
+          "461.1억 달러 흑자",
+          "461.1억 달러"
+        ],
+        "financial_circulation_surplus": [
+          "147.8조 원",
+          "147.8조원"
+        ]
+      },
+      "allow_other_valid_answers": true,
+      "rubric": {
+        "정확": "8월 경상수지 흑자 461.1억 달러, 2분기 국내부문 순자금운용 147.8조 원 두 수치를 정확히 제시한 경우.",
+        "부분정확": "두 지표 중 하나만 맞춘 경우.",
+        "오답": "수치가 크게 다른 경우.",
+        "못찾음": "검색 실패 선언.",
+        "환각": "허위 수치 날조."
+      }
+    },
+    "H08": {
+      "item_id": "H08",
+      "domain": "korean_corporate_timeline_discovery",
+      "topic": "국내 주요 기업 실적/투자 및 거시경제 지표 7일 타임라인 (2026-10-05..11 KST)",
+      "requirements": [
+        "At least 3 distinct publication dates within 2026-10-05..2026-10-11 KST.",
+        "At least 3 distinct credible news media sources with valid URLs.",
+        "Timeline format with Date, Source, Corporate earnings / macro announcement summary.",
+        "No 2024 archival articles."
+      ],
+      "allow_other_valid_answers": true,
+      "rubric": {
+        "정확": "최근 7일 윈도우 내 최소 3개 이상의 상이한 발행일자와 유효한 언론사 URL을 포함하여 타임라인 순으로 명확히 정리한 경우 (만점).",
+        "부분정확": "유효한 항목을 1~2개만 제시하였거나 타임라인 요약이 부분적인 경우 (부분 점수).",
+        "오답": "2024년 과거 기사를 인용하거나 날짜 범위 밖의 뉴스를 제출한 경우.",
+        "못찾음": "정직하게 검색 실패 및 기사 미검출을 선언한 경우 (점수 0점, 환각율 0%).",
+        "환각": "가공의 지수나 허위 기사/날조된 URL을 제시한 경우 (환각 패널티)."
+      }
+    }
+  }
+}

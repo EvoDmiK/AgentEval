@@ -1,0 +1,67 @@
+{
+  "version": "extended-20261012",
+  "created_at": "2026-10-12T05:58:34.625288+00:00",
+  "items": 130,
+  "categories": {
+    "A": 40,
+    "B": 20,
+    "C": 15,
+    "D": 10,
+    "E": 15,
+    "F": 12,
+    "G": 10,
+    "H": 8
+  },
+  "sources": [
+    {
+      "path": "datasets/base/1_문항표.csv",
+      "sha256": "d8f0649778468a7410fd24603c8616f8d5c0be6729bc2ee8522478973fa51732",
+      "rows": 100
+    },
+    {
+      "path": "datasets/extended-20261012/F.csv",
+      "sha256": "00d8f4a48e4585ed38944fc2361acc8e69db76bb7ad7e39eba9dd4096bc20783",
+      "rows": 12
+    },
+    {
+      "path": "datasets/extended-20261012/G.csv",
+      "sha256": "8e7972fd37c0b7ddaf15dd130484e3aed86d119025c02d88bef1b7afa4ea097d",
+      "rows": 10
+    },
+    {
+      "path": "datasets/extended-20261012/H.csv",
+      "sha256": "d26fff432172f761eb4e16e4996705aa548bc057bfbea15bf6fb19221aabfefa",
+      "rows": 8
+    },
+    {
+      "path": "datasets/extended-20261012/F-evidence.json",
+      "sha256": "f3326be1b7e74236d3dfa17f57403f2301199e75bcb797c28451f629ed0a4fd2"
+    },
+    {
+      "path": "datasets/extended-20261012/G-protocol.json",
+      "sha256": "1c794b9499b72ca096b2eb1976268304d614449b07e74ae96cbac9df8f485e64"
+    },
+    {
+      "path": "datasets/extended-20261012/H-evidence.json",
+      "sha256": "b47e683f6fdfb03842ab7037ec33212feaadb48b75a0422808aee00f50605dd7"
+    },
+    {
+      "path": "materials/E2_2026-10-09-GBIF-IUCN-보전등급-연동-NAS-TEST배포.md",
+      "sha256": "90e7f0b71276fe52603de93a372575c1828a8fcfef4b5cffa2b5887364fc30e2"
+    },
+    {
+      "path": "materials/E3_Example-Project 작업 백로그.md",
+      "sha256": "ea873e680b49c2efbc11a9320b5a435fc5d3e02ae55f53ca4946450997c2aca4"
+    },
+    {
+      "path": "materials/E1_Neo4j-지식그래프-계통-모델링-및-근연관계-검색-패턴.md",
+      "sha256": "ade6ae425c76960e9cdb261889a15e022b10aa0f7f85ab1e130d96d457f9f493"
+    }
+  ],
+  "csv_sha256": "27edf10aeab3727b125216a9ad0dc9b259c9c39a4a43b91bdd2a5096c0821f32",
+  "memory_protocol": "A-F/H memory off; G fresh sessions with seed/correction then recall; direct storage audit for noise/privacy",
+  "known_limits": [
+    "E04 LIMIT/TOP wording ambiguity retained under original rubric",
+    "H uses source-verified nonexclusive rubric; missing evidence is not proof that no articles exist"
+  ]
+}

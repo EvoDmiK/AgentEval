@@ -1,0 +1,7 @@
+﻿준비 체크,내용,완료
+1,두 에이전트 모두 비어 있는 전용 계정으로 시작 (OpenClaw: example-project-openclaw-eval / Hermes: example-project-openclaw-compare),
+2,로컬 기억 파일 비우기 (OpenClaw eval: MEMORY.md·USER.md / Hermes: memories 폴더),
+3,세션 1 후 서버에서 세션 커밋(또는 일정 시간 대기)한 뒤 기억 개수 확인 — 두 에이전트 동일 조건,
+4,세션 2는 반드시 새 세션으로 시작,
+5,'출처' 칸에 OpenViking인지 로컬 파일인지 구분해서 기록,
+6,각 문항 3회 반복 사이마다 계정 초기화 (기억이 다음 반복에 영향을 주지 않게),

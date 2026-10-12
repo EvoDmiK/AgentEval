@@ -6,13 +6,8 @@ __pycache__/
 # Isolated evaluation dependencies
 .venv-eval/
 
-# Local deployment configuration and private evaluation evidence
+# Local configuration, original evidence and generated graphs
 config.local.json
-HANDOFF.md
-archive/
-datasets/
-materials/
-templates/
 graphify-out/
 .env
 .env.*
@@ -28,3 +23,6 @@ scripts/cleanup-openviking.sh
 scripts/quote_check.py
 scripts/publish_eval_dataset.py
 scripts/team_update_handoff.py
+
+# Unredacted originals retained only on this machine
+.private-backup/

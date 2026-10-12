@@ -1,23 +1,41 @@
 # AgentEval — Hermes · OpenClaw
 
-Hermes와 OpenClaw의 답변 품질, 실행 효율, 도구 사용 과정과 기억 구성요소를 비교하는 평가 도구입니다. Claude의 블라인드 채점, Codex의 실행·기준 감사, Antigravity의 출처·저장 내용 검토를 함께 사용했습니다.
+Hermes와 OpenClaw의 답변 정확도, 응답 시간, 토큰 사용량, 도구 사용 과정과 장기 기억을 비교하는 평가 도구입니다. 평가 문항·정답·근거, 오류를 심은 검토용 문서, 채점 템플릿과 MLflow 집계 스크립트를 제공합니다.
 
-## 최근 평가
+## 평가 결과
 
-[2026년 10월 12일 평가 보고서](docs/evaluation-2026-10-12.md)에 결과와 한계를 정리했습니다. 130문항의 주 비교에서 정확도는 OpenClaw **98.02%**, Hermes **98.81%**였습니다. 현재 구성의 1회 결과이며 보편적인 우열을 입증하지 않습니다.
+[2026-10-12 평가 보고서](docs/evaluation-2026-10-12.md)의 130문항 비교에서 정확도는 OpenClaw **98.02%**, Hermes **98.81%**였습니다. 동일 응답 113쌍에서는 OpenClaw의 중앙 응답 시간이 16.8%, 입력 토큰이 7.9% 적었습니다. 현재 구성의 1회 결과이며 보편적인 성능 우열을 뜻하지 않습니다. 토큰 감소율은 비용 절감률과 다르고, 비용은 요금제·캐시·크레딧에 따라 달라지는 참고 지표입니다.
 
-같은 응답 113쌍에서 OpenClaw의 중앙 응답 시간은 16.8%, 입력 토큰은 7.9% 적었습니다. 기억 회수와 불필요한 기억 저장 방지는 별도로 평가했습니다. 요청된 과정 평가 중 계획·도구 선택·인자 정확성의 독립 정량 점수는 산출하지 않았습니다.
+Claude는 블라인드 채점, Codex는 실행·계측·기준 감사, Antigravity는 출처 및 저장 내용 검토를 맡았습니다. 계획·도구 선택·인자 정확성의 독립 정량 점수는 산출하지 않았습니다.
 
-## 구성
+## 저장소 구성
 
-- `scripts/`: LangChain autolog 실행, 블라인드 채점, 품질·효율·도구 과정 집계, MLflow 게시·trace 통합 도구
-- `docs/`: 실제 환경 식별자와 접속 정보를 제외한 공개 평가 보고서
-- `requirements-eval.txt`: 검증한 Python 패키지 버전
-- `config.example.json`: 가상 환경 설정 예시
+| 경로 | 내용 |
+|---|---|
+| `datasets/base/1_문항표.csv` | 기본 A–E 100문항 |
+| `datasets/extended-20261012/` | A–H 130문항 통합 CSV, inputs/expectations JSON, 근거·기억 프로토콜·해시 manifest |
+| `materials/` | E 문항용 오류 주입 문서와 쉬운 변형, 출처 목록 |
+| `templates/` | 프롬프트, 채점·실행 측정·기억 평가 시트 |
+| `scripts/` | 실행, 블라인드 채점, 집계, MLflow 게시 및 trace 관리 |
+| `docs/` | 평가 보고서와 [공개본 마스킹 안내](docs/public-data.md) |
+| `archive/`, `HANDOFF.md` | 마스킹한 이전 문항·설계 및 평가 인수인계 기록 |
 
-## 설정과 실행
+| 분류 | 평가 내용 | 문항 수 |
+|---|---|---:|
+| A | 단일 문서 사실 | 40 |
+| B | 문서 연결·계산 | 20 |
+| C | 문서에 없는 정보 | 15 |
+| D | 틀린 전제 바로잡기 | 10 |
+| E | 문서의 사실·논리 오류 찾기 | 15 |
+| F | Grafana·한국 법령 도구 사용 | 12 |
+| G | 기억 회수·선호·잡음 및 민감정보 저장 감사 | 10 |
+| H | 논문·뉴스 검색 | 8 |
 
-Python 3.12 환경에서 의존성을 설치합니다.
+E 문서는 의도적으로 틀린 내용이 포함된 평가 자료입니다. 운영·보안 지침으로 사용하지 마세요.
+
+## 설치와 준비
+
+Python 3.12에서 다음 명령을 실행합니다.
 
 ```sh
 python3 -m venv .venv-eval
@@ -26,12 +44,35 @@ cp config.example.json config.local.json
 .venv-eval/bin/python scripts/extended_runner.py --help
 ```
 
-MLflow 저장 대상은 `MLFLOW_TRACKING_URI` 환경 변수 또는 Git에서 제외되는 `config.local.json`의 `tracking_uri`로 지정합니다. 보관함 이름도 `EVAL_VAULT_NAME` 또는 로컬 설정의 `vault_name`으로 지정할 수 있습니다.
+`config.local.json`의 `tracking_uri`와 `vault_name`을 환경에 맞게 지정합니다. `MLFLOW_TRACKING_URI`와 `EVAL_VAULT_NAME` 환경 변수가 로컬 설정보다 우선합니다. 기본 MLflow 주소는 `http://localhost:5000`입니다. 로컬 설정과 자격 증명은 Git에서 제외합니다.
 
-실제 실행에는 별도로 준비한 평가 CSV와 로컬 에이전트 런타임이 필요합니다. 실행기는 외부 CLI의 LangChain trace와 내부 모델·도구의 native trace를 구분합니다. 평가 관련 기록은 하나의 `compare-summary` Experiment에서 관리하고 `agent`, `trace_scope`, 이력 구분 태그를 사용합니다.
+실제 평가에는 Docker 기반 OpenClaw CLI, 별도로 준비한 Hermes 실행기(`hermes-docker/run-hermes.sh` 또는 `--hermes-container`), 문서 보관함 및 문항에 맞는 MCP 도구가 필요합니다. 배포 환경에 맞는 권한·기억 초기화 절차와 콜백도 별도로 준비해야 합니다.
 
-## 공개 범위
+## 데이터셋 준비와 실행
 
-내부 문서에서 만든 문항·정답·근거, 원본 응답·기억·실행 기록, 운영 인수인계, 자격 증명과 배포별 유지보수 도구는 로컬에 보존하고 공개 Git에서 제외합니다. 따라서 이 저장소만으로 원래 비공개 데이터셋을 재현할 수는 없습니다. 자신의 자료와 런타임을 준비해야 합니다.
+공개 문항에서 통합 CSV·JSON과 해시를 다시 생성합니다.
 
-trace 통합 도구는 이 프로젝트의 평가 이력을 대상으로 작성됐습니다. 자신의 환경에 적용할 때 원본 Experiment ID와 출력 경로를 확인해야 합니다. 복사본 재조회와 원본 백업을 검증한 뒤 복원 가능한 삭제 상태로 전환하며, 점수를 재계산하지 않습니다.
+```sh
+.venv-eval/bin/python scripts/prepare_extended_dataset.py
+```
+
+런타임과 MLflow를 준비한 후 문항 하나부터 실행합니다. `--experiment-id`에는 자신의 MLflow Experiment ID를 넣습니다.
+
+```sh
+.venv-eval/bin/python scripts/extended_runner.py \
+  --dataset datasets/extended-20261012/questions.csv \
+  --ids A01 --agents openclaw,hermes --reps 1 \
+  --outdir runs/my-eval --memory off --experiment-id YOUR_EXPERIMENT_ID
+```
+
+`--all`은 전체 문항을 선택합니다. G의 기억 평가는 `--memory on`과 `--step-callback`을 포함한 별도 준비가 필요합니다. 도구 환경과 출처 보관함이 준비되지 않은 상태에서 전체 평가를 실행하지 마세요. 세부 옵션은 각 스크립트의 `--help`를 확인합니다.
+
+외부 CLI의 LangChain trace와 내부 모델·도구의 native trace는 구분합니다. 실행 결과와 원본 응답은 `runs/`에 저장되며 Git에서 제외됩니다. trace 통합 스크립트는 기존 평가 이력용이므로 자신의 Experiment ID와 백업·출력 경로를 검토한 뒤 사용해야 합니다.
+
+## 공개 데이터와 재현 범위
+
+공개본의 도메인·계정·호스트·서비스 및 프로젝트 식별자는 가상 값으로 치환했습니다. `example.invalid` 주소는 접속용이 아닙니다. 합성 기억 평가의 더미 비밀값도 `MASKED_DUMMY_API_KEY`, `MASKED_DUMMY_DB_PASSWORD`로 바꾸고 질문·정답·검사 마커에 동일하게 반영했습니다.
+
+보고서 수치는 마스킹 전 원래 평가 결과입니다. 공개 데이터셋은 별도 버전의 입력이며 원래 실행 증거와 해시가 다릅니다. 이전 `runs/`의 기억 스냅샷을 공개 프로토콜의 변경된 마커로 감사하면 원래 결과를 재현할 수 없습니다. 일부 출처 원문, 실제 Grafana 상태, 런타임·콜백과 원본 응답은 포함하지 않으므로 저장소만으로 원래 평가 전체를 재현할 수 없습니다.
+
+마스킹 전 원본은 로컬 `.private-backup/`에 보존했습니다. 원본·실행 로그·자격 증명·가상환경·생성된 지식 그래프·배포 전용 유지보수 도구는 계속 Git에서 제외합니다.
