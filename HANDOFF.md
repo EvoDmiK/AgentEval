@@ -92,7 +92,7 @@ MLflow 실험45의 **3 repetitions** 팀 집계 결과 및 보고서: `runs/team
 
 ## 8. 공동 평가 검증 메모 (2026-10-11)
 
-- Orca run: `run_11eed473b120`; 실제 Antigravity·Claude·Codex 워커를 사용했다. 검증된 집계 수치와 원문 발췌 없는 보고서를 MLflow에 추가 게시했다.
+- Orca run: `MASKED_ORCA_RUN_ID`; 실제 Antigravity·Claude·Codex 워커를 사용했다. 검증된 집계 수치와 원문 발췌 없는 보고서를 MLflow에 추가 게시했다.
 - 기억은 OFF 유지, 기억 평가와 기억 삭제는 수행하지 않았다.
 - 보관함 스냅샷8개 및 E2/E3는 manifest와 해시 일치. E1 현재 사본은 불일치하며 원래 실행 당시 사본은 미확정. 현재 심은 오류는 문항표와 일치. 원래 E1 제외 민감도는 `quality-sensitivity.json`.
 - E04 후보 LIMIT / 캐시 TOP 구분은 모호하므로 사전 기준 기본값과 항목 제외 민감도를 함께 기록했다. 잘못된 첫 숫자가 남은 자기 정정은 부분 점수, 최종 정정만 보는 민감도도 기록했다.
